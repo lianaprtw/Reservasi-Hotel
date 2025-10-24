@@ -1,0 +1,5 @@
+# Abaikan folder dependensi Node
+node_modules
+
+# Abaikan file environment (jika ada)
+.env
