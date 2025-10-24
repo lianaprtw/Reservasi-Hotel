@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = (e) => {
     e.preventDefault();
 
-    // Simulasi login berhasil (nanti bisa diganti dengan API login)
+    // Simulasi login berhasil (bisa diganti API)
     localStorage.setItem("token", "fake-token"); 
-
-    // Arahkan ke halaman home
     navigate("/home");
   };
+
+  // Tombol aktif jika email & password tidak kosong
+  const isFormValid = email.trim() !== "" && password.trim() !== "";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -25,13 +28,14 @@ const Login = () => {
         <div className="w-1/2 p-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Login</h2>
 
-          {/* ubah form agar pakai handleLogin */}
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
               <input
                 type="text"
                 placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
@@ -41,13 +45,17 @@ const Login = () => {
               <input
                 type="password"
                 placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-[#7C6A46] text-white py-2 rounded-md hover:bg-[#7A634A] transition"
+              disabled={!isFormValid}
+              className={`w-full py-2 rounded-md transition 
+                ${isFormValid ? "bg-[#7C6A46] text-white hover:bg-[#7A634A]" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
             >
               Login
             </button>

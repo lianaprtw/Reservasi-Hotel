@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
   const navigate = useNavigate();
+
+  // State untuk input
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleRegister = (e) => {
     e.preventDefault();
@@ -11,6 +18,14 @@ const Register = () => {
     alert("Registration successful! Please login.");
     navigate("/login"); // arahkan ke halaman login
   };
+
+  // Tombol aktif jika semua input terisi
+  const isFormValid =
+    name.trim() &&
+    email.trim() &&
+    phone.trim() &&
+    country.trim() &&
+    password.trim();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -39,6 +54,8 @@ const Register = () => {
               <input
                 type="text"
                 placeholder="Enter your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
@@ -50,6 +67,8 @@ const Register = () => {
               <input
                 type="email"
                 placeholder="name@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
@@ -61,6 +80,8 @@ const Register = () => {
               <input
                 type="text"
                 placeholder="With Country Code"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
@@ -72,6 +93,8 @@ const Register = () => {
               <input
                 type="text"
                 placeholder="Country Name"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
@@ -83,6 +106,8 @@ const Register = () => {
               <input
                 type="password"
                 placeholder="Min. 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
@@ -97,7 +122,12 @@ const Register = () => {
 
             <button
               type="submit"
-              className="w-full bg-[#7C6A46] text-white py-2 rounded-md hover:bg-[#7A634A] transition"
+              disabled={!isFormValid}
+              className={`w-full py-2 rounded-md transition ${
+                isFormValid
+                  ? "bg-[#7C6A46] text-white hover:bg-[#7A634A]"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
               Register
             </button>
