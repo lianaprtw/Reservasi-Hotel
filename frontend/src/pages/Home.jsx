@@ -20,10 +20,10 @@ const Home = () => {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
 
-  const locationOptions = ["Ubud", "Kuta", "Jakarta", "Tokyo", "Singapore"];
+//   const locationOptions = ["Ubud", "Kuta", "Jakarta", "Tokyo", "Singapore"];
   const roomTypeOptions = ["The Royal Room", "The Deluxe Suite", "The Ocean View"];
 
-  const isBookNowActive = loc && roomType && person && checkIn && checkOut;
+  const isBookNowActive = roomType && person && checkIn && checkOut;
 
   const handleBookNow = () => {
     if (!isBookNowActive) return;
@@ -88,7 +88,7 @@ const Home = () => {
       {/* Booking Filter (pakai dropdown) */}
       <section className="bg-white px-8 py-6 shadow-lg mx-10 -mt-8 rounded-lg flex flex-wrap justify-between items-center gap-4">
         {/* Lokasi */}
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <i className="ri-map-pin-line text-amber-700 text-xl"></i>
           <div>
             <p className="text-sm text-gray-500">Location</p>
@@ -107,7 +107,7 @@ const Home = () => {
               ))}
             </select>
           </div>
-        </div>
+        </div> */}
 
         {/* Room type (FIXED) */}
         <div className="flex items-center space-x-2">

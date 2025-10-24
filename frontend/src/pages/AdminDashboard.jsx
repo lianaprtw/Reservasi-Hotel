@@ -17,8 +17,22 @@ const AdminDashboard = () => {
   ]);
 
   const [bookings, setBookings] = useState([
-    { id: 1, user: "Liana", room: "Deluxe Room", status: "Confirmed" },
-    { id: 2, user: "Angga", room: "Luxury Suite", status: "Pending" },
+    { 
+        id: 1, 
+        user: "Liana", 
+        room: "Deluxe Room", 
+        status: "Confirmed",
+        checkIn: "2025-10-25",
+        checkOut: "2025-10-28" 
+    },
+    { 
+        id: 2, 
+        user: "Angga", 
+        room: "Luxury Suite", 
+        status: "Pending",
+        checkIn: "2025-11-01",
+        checkOut: "2025-11-05" 
+    },
   ]);
 
   // States
@@ -107,7 +121,7 @@ const AdminDashboard = () => {
             <table className="w-full table-auto text-left">
               <thead>
                 <tr className="bg-gray-100">
-                  {["User", "Room", "Status", "Action"].map((header) => (
+                  {["User", "Room", "Status", "Check-In", "Check-Out", "Action"].map((header) => (
                     <th key={header} className="p-4 text-gray-700">{header}</th>
                   ))}
                 </tr>
@@ -117,6 +131,8 @@ const AdminDashboard = () => {
                   <tr key={b.id} className="hover:bg-gray-50 transition">
                     <td className="p-4">{b.user}</td>
                     <td className="p-4">{b.room}</td>
+                    <td className="p-4">{new Date(b.checkIn).toLocaleDateString("id-ID")}</td>
+                    <td className="p-4">{new Date(b.checkOut).toLocaleDateString("id-ID")}</td>
                     <td className="p-4">{b.status}</td>
                     <td className="p-4 flex space-x-4">
                       <TrashIcon className={iconClass} onClick={() => handleCancelBooking(b.id)} />
