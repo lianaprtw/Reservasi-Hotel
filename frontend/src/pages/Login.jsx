@@ -1,21 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+// membuat komponen Login
 const Login = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate(); //berpindah halaman
+  const [username, setUsername] = useState(""); //state untuk menyimpan username
+  const [password, setPassword] = useState(""); //state untuk menyimpan password
 
+  // fungsi saat tombol login di klik
   const handleLogin = (e) => {
-    e.preventDefault();
+    e.preventDefault(); //mencegah reload halaman saat form disubmit
 
     // Simulasi login berhasil (bisa diganti API)
-    localStorage.setItem("token", "fake-token"); 
-    navigate("/home");
+    localStorage.setItem("token", "fake-token"); //menyimpan token palsu di localStorage agar bisa dipakai sebagia simulasi autentikasi
+    navigate("/home"); //arahkan ke halaman home
   };
 
-  // Tombol aktif jika email & password tidak kosong
-  const isFormValid = email.trim() !== "" && password.trim() !== "";
+  // Tombol aktif jika username & password tidak kosong
+  const isFormValid = username.trim() !== "" && password.trim() !== "";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -28,20 +30,23 @@ const Login = () => {
         <div className="w-1/2 p-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Login</h2>
 
+          {/* form login */}
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Username</label>
+              {/* input username */}
               <input
                 type="text"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Password</label>
+              {/* input password */}
               <input
                 type="password"
                 placeholder="Enter your password"
@@ -51,6 +56,7 @@ const Login = () => {
               />
             </div>
 
+            {/* tombol login */}
             <button
               type="submit"
               disabled={!isFormValid}
@@ -61,6 +67,7 @@ const Login = () => {
             </button>
           </form>
 
+          {/* tautan ke halaman register */}
           <p className="text-sm text-center text-gray-600 mt-4">
             Don’t have an account?{" "}
             <Link to="/register" className="text-coffee font-medium hover:underline">
