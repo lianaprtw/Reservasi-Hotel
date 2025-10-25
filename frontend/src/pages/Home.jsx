@@ -13,26 +13,27 @@ import { roomsData } from "../data/rooms";
 const Home = () => {
   const navigate = useNavigate();
 
-  // state input
+  // inisialiasi state input
   const [loc, setLoc] = useState("");
-  const [roomType, setRoomType] = useState("");
+  const [roomType, setRoomType] = useState(""); 
   const [person, setPerson] = useState("1");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
 
 //   const locationOptions = ["Ubud", "Kuta", "Jakarta", "Tokyo", "Singapore"];
-  const roomTypeOptions = ["The Royal Room", "The Deluxe Suite", "The Ocean View"];
+  const roomTypeOptions = ["The Royal Room", "The Deluxe Suite", "The Ocean View"]; //daftar type kamar yang tersedia
 
-  const isBookNowActive = roomType && person && checkIn && checkOut;
+  const isBookNowActive = roomType && person && checkIn && checkOut; // tombol aktif jika semua input terisi
 
+  // fungsi booking
   const handleBookNow = () => {
     if (!isBookNowActive) return;
 
     const selectedRoom = roomsData.find((room) => room.name === roomType);
 
-    navigate("/booking", {
+    navigate("/booking", { //mengarahakn ke halaman booking dengan membawa data booking dikirim lewat state
       state: {
-        location: loc,
+        // location: loc,
         roomName: selectedRoom?.name || roomType,
         price: selectedRoom?.price || 0,
         roomId: selectedRoom?.id,
@@ -43,6 +44,7 @@ const Home = () => {
     });
   };
 
+  // data fasilitas hotel
   const facilities = [
     { icon: "ri-wifi-line", label: "Wifi" },
     { icon: "ri-cup-line", label: "Breakfast" },
