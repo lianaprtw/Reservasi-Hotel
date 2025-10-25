@@ -12,10 +12,10 @@ const Register = () => {
   const [password, setPassword] = useState("");
 
   const handleRegister = (e) => {
-    e.preventDefault();
+    e.preventDefault(); //mencegah reload halaman saat form disubmit
 
     // Simulasi proses register berhasil
-    alert("Registration successful! Please login.");
+    alert("Registration successful! Please login."); //menampilkna notifasi sederhana
     navigate("/login"); // arahkan ke halaman login
   };
 
@@ -40,7 +40,7 @@ const Register = () => {
           </p>
         </div>
 
-        {/* Bagian Kanan (Form) */}
+        {/* Bagian Kanan (Form input) */}
         <div className="w-1/2 p-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
             Create Account
@@ -112,6 +112,7 @@ const Register = () => {
               />
             </div>
 
+            {/* teks  persetujuan */}
             <p className="text-xs text-gray-500">
               By signing up you agree to our{" "}
               <span className="text-coffee font-medium">
@@ -120,6 +121,7 @@ const Register = () => {
               .
             </p>
 
+            {/* tombol register */}
             <button
               type="submit"
               disabled={!isFormValid}
@@ -133,6 +135,7 @@ const Register = () => {
             </button>
           </form>
 
+          {/* tautan ke halaman login */}
           <p className="text-sm text-center text-gray-600 mt-4">
             Already have an account?{" "}
             <Link to="/login" className="text-coffee font-medium hover:underline">
