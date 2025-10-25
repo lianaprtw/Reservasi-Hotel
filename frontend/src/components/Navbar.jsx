@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-  const location = useLocation(); // ✅ Ambil lokasi halaman saat ini
+const Navbar = () => { // mendefinisikan komponen Navbar
+  const [isOpen, setIsOpen] = useState(false); // membuat state bernama isOpen dengan nilai awal false
+  const [profileImage, setProfileImage] = useState(null); // membuat state untuk menyimpan profil pengguna
+  const dropdownRef = useRef(null); // membuat referensi ke elemen dropdown
+  const navigate = useNavigate(); //hook daria react router untuk navigasi halaman
+  const location = useLocation(); //hook dari react router untuk mendapatkan informasi lokasi saat ini
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
@@ -30,6 +30,7 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fungsi untuk logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
@@ -40,7 +41,7 @@ const Navbar = () => {
 
   return (
     <nav className="flex justify-between items-center py-4 px-10 bg-white shadow-sm relative">
-      {/* Logo */}
+      {/* Logo nama hotel*/}
       <div className="text-center">
         <h1 className="text-xl font-semibold text-[#6B4A2B]">Puri Indah</h1>
         <p className="text-xs text-gray-500 tracking-[0.2em]">HOTEL</p>
@@ -76,7 +77,7 @@ const Navbar = () => {
       {/* Profile Dropdown */}
       <div className="relative" ref={dropdownRef}>
         <div
-          onClick={toggleDropdown}
+          onClick={toggleDropdown} //saat di klik, dropdown muncul atau hilang
           className="flex items-center space-x-2 cursor-pointer"
         >
           {profileImage ? (
@@ -91,8 +92,10 @@ const Navbar = () => {
           <span className="text-gray-700 font-medium">Liana Tantik</span>
         </div>
 
+        {/* isi dari dropdown */}
         {isOpen && (
           <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg border border-gray-100 py-2 z-50">
+            {/* menuju halaman profil pengguna */}
             <Link
               to="/my-account"
               className="block px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
@@ -100,6 +103,7 @@ const Navbar = () => {
             >
               My Account
             </Link>
+            {/* menuju halaman daftar pemesanan */}
             <Link
               to="/my-booking"
               className="block px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
@@ -107,6 +111,7 @@ const Navbar = () => {
             >
               My Booking
             </Link>
+            {/* menjalankan fungsi logout */}
             <button
               onClick={handleLogout}
               className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
