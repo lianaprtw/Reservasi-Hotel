@@ -1,10 +1,17 @@
-import React, { useState } from "react";
-import { FaUserCircle, FaPen, FaCheck, FaTimes, FaCamera, FaTrash } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import {
+  FaUserCircle,
+  FaPen,
+  FaCheck,
+  FaTimes,
+  FaCamera,
+  FaTrash,
+} from "react-icons/fa";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 const MyAccount = () => {
-  const [profileData, setProfileData] = useState([
+  const defaultProfile = [
     { label: "Name", value: "Ni Kadek Liana Pratiwi" },
     { label: "Display Name", value: "Liana Tantik" },
     { label: "Email Address", value: "liana@example.com" },
@@ -13,12 +20,38 @@ const MyAccount = () => {
     { label: "Nationality", value: "Indonesia" },
     { label: "Gender", value: "Female" },
     { label: "Address", value: "Jl. Sunset Road No. 30, Kuta, Bali" },
-  ]);
+  ];
 
+  const [profileData, setProfileData] = useState(defaultProfile);
   const [editIndex, setEditIndex] = useState(null);
   const [tempValue, setTempValue] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+
+  // 🔹 Ambil data dari localStorage saat pertama kali load
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("profileData");
+    const savedImage = localStorage.getItem("profileImage");
+
+    if (savedProfile) {
+      setProfileData(JSON.parse(savedProfile));
+    }
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+  }, []);
+
+  // 🔹 Simpan data ke localStorage setiap kali ada perubahan
+  const updateLocalStorage = (data) => {
+    localStorage.setItem("profileData", JSON.stringify(data));
+
+    // Simpan juga Display Name dan Profile Image terpisah untuk Navbar
+    const displayName = data.find((item) => item.label === "Display Name")?.value;
+    if (displayName) localStorage.setItem("displayName", displayName);
+
+    // Trigger event agar Navbar langsung update
+    window.dispatchEvent(new Event("storage"));
+  };
 
   const handleEdit = (index, value) => {
     setEditIndex(index);
@@ -30,6 +63,9 @@ const MyAccount = () => {
     updatedData[index].value = tempValue;
     setProfileData(updatedData);
     setEditIndex(null);
+
+    // 🔹 Simpan semua perubahan ke localStorage
+    updateLocalStorage(updatedData);
   };
 
   const handleCancel = () => {
@@ -41,12 +77,20 @@ const MyAccount = () => {
     if (file) {
       const imageURL = URL.createObjectURL(file);
       setProfileImage(imageURL);
+      localStorage.setItem("profileImage", imageURL);
+
+      // 🔹 Update Navbar real-time
+      window.dispatchEvent(new Event("storage"));
       setShowPhotoOptions(false);
     }
   };
 
   const handleRemovePhoto = () => {
     setProfileImage(null);
+    localStorage.removeItem("profileImage");
+
+    // 🔹 Update Navbar real-time
+    window.dispatchEvent(new Event("storage"));
     setShowPhotoOptions(false);
   };
 
@@ -55,14 +99,19 @@ const MyAccount = () => {
       <Navbar />
 
       <main className="flex-1 px-20 py-10">
-        <h2 className="text-3xl font-semibold text-gray-800 mb-8">My Account</h2>
+        <h2 className="text-3xl font-semibold text-gray-800 mb-8">
+          My Account
+        </h2>
 
         <div className="flex justify-between items-start">
-          {/* Table Section */}
+          {/* 🔹 Tabel Data Akun */}
           <table className="w-3/4 border-collapse">
             <tbody>
               {profileData.map((item, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                <tr
+                  key={index}
+                  className="border-b border-gray-200 hover:bg-gray-50"
+                >
                   <td className="py-4 px-4 text-gray-600 font-medium w-1/3">
                     {item.label}
                   </td>
@@ -110,7 +159,7 @@ const MyAccount = () => {
             </tbody>
           </table>
 
-          {/* Profile Photo Section */}
+          {/* 🔹 Foto Profil */}
           <div className="relative flex flex-col items-center">
             {profileImage ? (
               <img
@@ -126,7 +175,6 @@ const MyAccount = () => {
               />
             )}
 
-            {/* Popup Options */}
             {showPhotoOptions && (
               <div className="absolute top-44 flex flex-col bg-white shadow-md rounded-md border w-40 text-center z-10">
                 <label

@@ -2,21 +2,36 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 
-const Navbar = () => { // mendefinisikan komponen Navbar
-  const [isOpen, setIsOpen] = useState(false); // membuat state bernama isOpen dengan nilai awal false
-  const [profileImage, setProfileImage] = useState(null); // membuat state untuk menyimpan profil pengguna
-  const dropdownRef = useRef(null); // membuat referensi ke elemen dropdown
-  const navigate = useNavigate(); //hook daria react router untuk navigasi halaman
-  const location = useLocation(); //hook dari react router untuk mendapatkan informasi lokasi saat ini
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const [displayName, setDisplayName] = useState("Guest");
+
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  // Ambil foto profil dari localStorage
+  // 🔹 Ambil data dari localStorage dan update realtime
   useEffect(() => {
     const savedImage = localStorage.getItem("profileImage");
-    if (savedImage) {
-      setProfileImage(savedImage);
-    }
+    const savedName = localStorage.getItem("displayName");
+
+    if (savedImage) setProfileImage(savedImage);
+    if (savedName) setDisplayName(savedName);
+
+    // Dengarkan perubahan dari localStorage (real-time)
+    const handleStorageChange = () => {
+      const updatedName = localStorage.getItem("displayName");
+      const updatedImage = localStorage.getItem("profileImage");
+
+      setDisplayName(updatedName || "Guest");
+      setProfileImage(updatedImage);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   // Tutup dropdown saat klik di luar
@@ -30,22 +45,21 @@ const Navbar = () => { // mendefinisikan komponen Navbar
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fungsi untuk logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
-  // ✅ Fungsi bantu untuk menentukan apakah menu sedang aktif
   const isActive = (path) => location.pathname === path;
 
   return (
     <nav className="flex justify-between items-center py-4 px-10 bg-white shadow-sm relative">
-      {/* Logo nama hotel*/}
+      {/* Logo */}
       <div className="text-center">
         <h1 className="text-xl font-semibold text-[#6B4A2B]">Puri Indah</h1>
         <p className="text-xs text-gray-500 tracking-[0.2em]">HOTEL</p>
       </div>
+
       {/* Menu */}
       <ul className="flex space-x-8 text-gray-700 font-medium">
         <li>
@@ -74,12 +88,9 @@ const Navbar = () => { // mendefinisikan komponen Navbar
         </li>
       </ul>
 
-      {/* Profile Dropdown */}
+      {/* Profil */}
       <div className="relative" ref={dropdownRef}>
-        <div
-          onClick={toggleDropdown} //saat di klik, dropdown muncul atau hilang
-          className="flex items-center space-x-2 cursor-pointer"
-        >
+        <div onClick={toggleDropdown} className="flex items-center space-x-2 cursor-pointer">
           {profileImage ? (
             <img
               src={profileImage}
@@ -89,13 +100,12 @@ const Navbar = () => { // mendefinisikan komponen Navbar
           ) : (
             <FaUserCircle className="text-3xl text-gray-500" />
           )}
-          <span className="text-gray-700 font-medium">Liana Tantik</span>
+          <span className="text-gray-700 font-medium">{displayName}</span>
         </div>
 
-        {/* isi dari dropdown */}
+        {/* Dropdown Menu */}
         {isOpen && (
           <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg border border-gray-100 py-2 z-50">
-            {/* menuju halaman profil pengguna */}
             <Link
               to="/my-account"
               className="block px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
@@ -103,7 +113,6 @@ const Navbar = () => { // mendefinisikan komponen Navbar
             >
               My Account
             </Link>
-            {/* menuju halaman daftar pemesanan */}
             <Link
               to="/my-booking"
               className="block px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
@@ -111,7 +120,6 @@ const Navbar = () => { // mendefinisikan komponen Navbar
             >
               My Booking
             </Link>
-            {/* menjalankan fungsi logout */}
             <button
               onClick={handleLogout}
               className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-700"
