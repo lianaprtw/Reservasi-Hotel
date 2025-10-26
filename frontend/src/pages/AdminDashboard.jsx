@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
+import {
+  getRooms,
+  createRoom,
+  updateRoom,
+  deleteRoom,
+} from "../api/roomService";
 import axios from "axios";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
   // 🔹 Data state
-  const [rooms, setRooms] = useState([
-    { id: 1, name: "Deluxe Room", price: 120, capacity: 2 },
-    { id: 2, name: "Luxury Suite", price: 200, capacity: 4 },
-  ]);
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [errorRooms, setErrorRooms] = useState("");
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [activeTab, setActiveTab] = useState("rooms");
@@ -64,28 +69,75 @@ const AdminDashboard = () => {
     }
   };
 
-  // 🔹 CRUD Room (dummy lokal)
-  const handleDeleteRoom = (id) => setRooms(rooms.filter((room) => room.id !== id));
-  const handleAddRoom = () => {
-    if (!newRoom.name || !newRoom.price || !newRoom.capacity) return;
-    const newData = {
-      id: Date.now(),
-      name: newRoom.name,
-      price: parseFloat(newRoom.price),
-      capacity: parseInt(newRoom.capacity),
+  // CRUD functions
+  // === CRUD ROOM ===
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/api/rooms");
+        if (!res.ok) throw new Error("Gagal mengambil data kamar");
+        const data = await res.json();
+        setRooms(data);
+      } catch (error) {
+        console.error("❌ Failed to fetch rooms:", error);
+        setErrorRooms("⚠️ Room service (port 5001) tidak dapat dijangkau.");
+      } finally {
+        setLoadingRooms(false);
+      }
     };
-    setRooms([...rooms, newData]);
-    setShowAddRoom(false);
-    setNewRoom({ name: "", price: "", capacity: "" });
+
+    fetchRooms();
+  }, []);
+
+  const handleAddRoom = async () => {
+    if (!newRoom.name || !newRoom.price || !newRoom.capacity) return;
+
+    try {
+      const added = await createRoom({
+        name: newRoom.name,
+        price: parseFloat(newRoom.price),
+        capacity: parseInt(newRoom.capacity),
+      });
+      setRooms([...rooms, added]); // update state tanpa reload
+      setShowAddRoom(false);
+      setNewRoom({ name: "", price: "", capacity: "" });
+    } catch (err) {
+      console.error("❌ Failed to create room:", err);
+    }
   };
-  const handleEditRoom = (room) => { setEditRoomData(room); setShowEditRoom(true); };
-  const handleUpdateRoom = () => { 
-    setRooms(rooms.map((r) => r.id === editRoomData.id ? editRoomData : r)); 
-    setShowEditRoom(false); 
+
+  const handleEditRoom = (room) => {
+    setEditRoomData(room);
+    setShowEditRoom(true);
+  };
+
+  const handleUpdateRoom = async () => {
+    try {
+      const updated = await updateRoom(editRoomData._id, {
+        name: editRoomData.name,
+        price: parseFloat(editRoomData.price),
+        capacity: parseInt(editRoomData.capacity),
+      });
+
+      setRooms(rooms.map((r) => (r._id === updated._id ? updated : r)));
+      setShowEditRoom(false);
+    } catch (err) {
+      console.error("❌ Failed to update room:", err);
+    }
+  };
+
+  const handleDeleteRoom = async (id) => {
+    try {
+      await deleteRoom(id);
+      setRooms(rooms.filter((room) => room._id !== id));
+    } catch (err) {
+      console.error("❌ Failed to delete room:", err);
+    }
   };
 
   // 🔹 Booking dummy
-  const handleCancelBooking = (id) => setBookings(bookings.filter((b) => b.id !== id));
+  const handleCancelBooking = (id) =>
+    setBookings(bookings.filter((b) => b.id !== id));
 
   // 🔹 Logout
   const handleLogout = () => {
@@ -117,7 +169,9 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <h1 className="text-3xl font-bold text-[#9C6644] mb-6 text-center">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold text-[#9C6644] mb-6 text-center">
+        Admin Dashboard
+      </h1>
 
       {/* Tabs */}
       <div className="flex justify-center gap-4 mb-8">
@@ -145,7 +199,9 @@ const AdminDashboard = () => {
               <thead>
                 <tr className="bg-gray-100">
                   {["User", "Room", "Status", "Action"].map((header) => (
-                    <th key={header} className="p-4 text-gray-700">{header}</th>
+                    <th key={header} className="p-4 text-gray-700">
+                      {header}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -156,7 +212,10 @@ const AdminDashboard = () => {
                     <td className="p-4">{b.room}</td>
                     <td className="p-4">{b.status}</td>
                     <td className="p-4 flex space-x-4">
-                      <TrashIcon className={iconClass} onClick={() => handleCancelBooking(b.id)} />
+                      <TrashIcon
+                        className={iconClass}
+                        onClick={() => handleCancelBooking(b.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -182,19 +241,30 @@ const AdminDashboard = () => {
               <thead>
                 <tr className="bg-gray-100">
                   {["Name", "Price (USD)", "Capacity", "Action"].map((h) => (
-                    <th key={h} className="p-4 text-gray-700">{h}</th>
+                    <th key={h} className="p-4 text-gray-700">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {rooms.map((room) => (
-                  <tr key={room.id} className="hover:bg-gray-50 transition">
+                  <tr
+                    key={room._id || room.id}
+                    className="hover:bg-gray-50 transition"
+                  >
                     <td className="p-4">{room.name}</td>
                     <td className="p-4">${room.price}</td>
                     <td className="p-4">{room.capacity}</td>
                     <td className="p-4 flex space-x-4">
-                      <PencilIcon className={iconClass} onClick={() => handleEditRoom(room)} />
-                      <TrashIcon className={iconClass} onClick={() => handleDeleteRoom(room.id)} />
+                      <PencilIcon
+                        className={iconClass}
+                        onClick={() => handleEditRoom(room)}
+                      />
+                      <TrashIcon
+                        className={iconClass}
+                        onClick={() => handleDeleteRoom(room._id || room.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -211,7 +281,9 @@ const AdminDashboard = () => {
               <thead>
                 <tr className="bg-gray-100">
                   {["Name", "Email", "Action"].map((h) => (
-                    <th key={h} className="p-4 text-gray-700">{h}</th>
+                    <th key={h} className="p-4 text-gray-700">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -224,7 +296,10 @@ const AdminDashboard = () => {
                       </td>
                       <td className="p-4">{u.email}</td>
                       <td className="p-4 flex space-x-4">
-                        <TrashIcon className={iconClass} onClick={() => handleDeleteUser(u._id)} />
+                        <TrashIcon
+                          className={iconClass}
+                          onClick={() => handleDeleteUser(u._id)}
+                        />
                       </td>
                     </tr>
                   ))
@@ -273,17 +348,24 @@ const AdminDashboard = () => {
             <input
               type="number"
               placeholder="Capacity"
-              value={showAddRoom ? newRoom.capacity : editRoomData?.capacity || ""}
+              value={
+                showAddRoom ? newRoom.capacity : editRoomData?.capacity || ""
+              }
               onChange={(e) =>
                 showAddRoom
                   ? setNewRoom({ ...newRoom, capacity: e.target.value })
-                  : setEditRoomData({ ...editRoomData, capacity: e.target.value })
+                  : setEditRoomData({
+                      ...editRoomData,
+                      capacity: e.target.value,
+                    })
               }
               className="border w-full p-3 rounded"
             />
             <div className="flex justify-end space-x-4">
               <button
-                onClick={() => { showAddRoom ? setShowAddRoom(false) : setShowEditRoom(false); }}
+                onClick={() => {
+                  showAddRoom ? setShowAddRoom(false) : setShowEditRoom(false);
+                }}
                 className="px-4 py-2 bg-gray-300 rounded-lg"
               >
                 Cancel
