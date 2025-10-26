@@ -35,6 +35,7 @@ const BookingSuccess = () => {
         </p>
 
         <div className="bg-white rounded-xl shadow-lg p-8 w-[90%] md:w-[500px] text-center">
+          {/* Booking Summary */}
           <h3 className="font-semibold text-[#7C6A46] text-lg mb-3">
             Booking Summary
           </h3>
@@ -45,6 +46,16 @@ const BookingSuccess = () => {
           <p className="text-[#7C6A46] font-semibold text-lg mt-3">
             Total: ${booking.total} USD
           </p>
+
+          {/* Payment Details */}
+          {booking.payment && (
+            <>
+              <h3 className="font-semibold text-[#7C6A46] text-lg mt-4">Payment Details</h3>
+              <p><span className="font-medium">Payment Status:</span> {booking.payment.status}</p>
+              <p><span className="font-medium">Payment Method:</span> {booking.payment.paymentMethod}</p>
+              <p><span className="font-medium">Payment ID:</span> {booking.payment._id}</p>
+            </>
+          )}
 
           <button
             onClick={() => navigate("/home")}
