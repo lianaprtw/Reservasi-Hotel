@@ -1,40 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import axios from "axios";
 
 const BookingStep2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Ambil data dari BookingStep1
-  const booking = location.state || {}; // fallback jika state kosong
+  const booking = location.state || {};
 
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePayment = (e) => {
+  // Cek booking saat komponen pertama kali di-render
+  useEffect(() => {
+    if (!booking || (!booking.id && !booking._id)) {
+      alert("Booking data not found! Redirecting to Step 1.");
+      navigate("/booking");
+    }
+  }, [booking, navigate]);
+
+  const handlePayment = async (e) => {
     e.preventDefault();
-    alert("Payment successful!");
-    navigate("/booking-success", { state: booking });
-  };
 
-  if (!booking.roomName) {
-    // jika data tidak ada, redirect ke BookingStep1
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-gray-500">No booking data found. Redirecting...</p>
-        <button
-          onClick={() => navigate("/booking")}
-          className="mt-4 px-4 py-2 bg-[#7C6A46] text-white rounded-md"
-        >
-          Go to Booking Step 1
-        </button>
-      </div>
-    );
-  }
+    // Validasi form
+    if (!cardName || !cardNumber || !expiry || !cvv) {
+      alert("Please complete all payment fields.");
+      return;
+    }
+
+    const bookingId = booking.id || booking._id;
+    if (!bookingId) {
+      alert("Booking ID not found!");
+      return;
+    }
+
+    const paymentData = {
+      bookingId,
+      paymentMethod: "Credit Card",
+      cardDetails: { cardName, cardNumber, expiry, cvv },
+      amount: booking.total, 
+    };
+
+    try {
+      setIsSubmitting(true);
+      const response = await axios.post(
+        "http://localhost:3002/api/payment/pay",
+        paymentData
+      );
+      console.log("Payment response:", response.data);
+
+      alert("✅ Payment Successful!");
+      navigate("/booking-success", { state: { ...booking, payment: response.data } });
+    } catch (error) {
+      console.error("Payment failed:", error);
+      alert("❌ Payment failed: " + (error.response?.data?.message || error.message));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -47,7 +76,7 @@ const BookingStep2 = () => {
         </p>
 
         <div className="flex flex-col md:flex-row bg-white rounded-xl shadow-lg p-8 w-[90%] md:w-[800px] gap-8">
-          {/* Left side - Booking summary */}
+          {/* Booking summary */}
           <div className="flex flex-col md:w-1/2 border-r pr-5 mb-5 md:mb-0">
             <h3 className="font-semibold text-[#7C6A46] text-lg mb-3">
               Booking Summary
@@ -61,7 +90,7 @@ const BookingStep2 = () => {
             </p>
           </div>
 
-          {/* Right side - Payment form */}
+          {/* Payment form */}
           <div className="flex flex-col md:w-1/2">
             <form onSubmit={handlePayment} className="flex flex-col gap-4">
               <input
@@ -101,21 +130,17 @@ const BookingStep2 = () => {
 
               <button
                 type="submit"
-                className="bg-[#7C6A46] text-white py-2 rounded-md font-medium hover:bg-[#7A5232]"
+                disabled={isSubmitting}
+                className={`py-2 rounded-md font-medium ${
+                  isSubmitting ? "bg-gray-400" : "bg-[#7C6A46] hover:bg-[#7A5232] text-white"
+                }`}
               >
-                Pay ${booking.total} USD
+                {isSubmitting ? "Processing..." : `Pay $${booking.total} USD`}
               </button>
+
               <button
                 type="button"
-                onClick={() => 
-                  navigate("/booking",
-                    { state: {
-                      id: booking.id,
-                      roomName: booking.roomName,
-                      price: booking.price
-                    },
-                  })
-              }
+                onClick={() => navigate("/booking", { state: { ...booking } })}
                 className="bg-gray-100 text-gray-400 py-2 rounded-md font-medium hover:bg-gray-200 hover:text-[#7A5232] transition duration-300"
               >
                 Back
