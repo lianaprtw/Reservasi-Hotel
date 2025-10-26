@@ -1,41 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  // Data awal
+  // 🔹 Data state
   const [rooms, setRooms] = useState([
     { id: 1, name: "Deluxe Room", price: 120, capacity: 2 },
     { id: 2, name: "Luxury Suite", price: 200, capacity: 4 },
   ]);
-
-  const [users, setUsers] = useState([
-    { id: 1, name: "Liana", email: "liana@gmail.com" },
-    { id: 2, name: "Angga", email: "angga@gmail.com" },
-  ]);
-
-  const [bookings, setBookings] = useState([
-    { 
-        id: 1, 
-        user: "Liana", 
-        room: "Deluxe Room", 
-        status: "Confirmed",
-        checkIn: "2025-10-25",
-        checkOut: "2025-10-28" 
-    },
-    { 
-        id: 2, 
-        user: "Angga", 
-        room: "Luxury Suite", 
-        status: "Pending",
-        checkIn: "2025-11-01",
-        checkOut: "2025-11-05" 
-    },
-  ]);
-
-  // States
+  const [users, setUsers] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [activeTab, setActiveTab] = useState("rooms");
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [showEditRoom, setShowEditRoom] = useState(false);
@@ -45,7 +22,49 @@ const AdminDashboard = () => {
 
   const iconClass = "w-5 h-5 cursor-pointer hover:text-[#9C6644] transition";
 
-  // CRUD functions
+  // 🔹 Fetch semua user dari backend
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Anda belum login sebagai admin!");
+          return navigate("/login");
+        }
+
+        const res = await axios.get("http://localhost:5000/api/admin/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUsers(res.data);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        if (error.response?.status === 401) {
+          alert("Sesi admin berakhir, silakan login ulang.");
+          localStorage.removeItem("token");
+          navigate("/login");
+        }
+      }
+    };
+
+    fetchUsers();
+  }, [navigate]);
+
+  // 🔹 Hapus user dari database
+  const handleDeleteUser = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(users.filter((u) => u._id !== id));
+      alert("User berhasil dihapus.");
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      alert("Gagal menghapus user. Pastikan kamu login sebagai admin.");
+    }
+  };
+
+  // 🔹 CRUD Room (dummy lokal)
   const handleDeleteRoom = (id) => setRooms(rooms.filter((room) => room.id !== id));
   const handleAddRoom = () => {
     if (!newRoom.name || !newRoom.price || !newRoom.capacity) return;
@@ -64,13 +83,18 @@ const AdminDashboard = () => {
     setRooms(rooms.map((r) => r.id === editRoomData.id ? editRoomData : r)); 
     setShowEditRoom(false); 
   };
+
+  // 🔹 Booking dummy
   const handleCancelBooking = (id) => setBookings(bookings.filter((b) => b.id !== id));
-  const handleDeleteUser = (id) => setUsers(users.filter((u) => u.id !== id));
-  const handleLogout = () => navigate("/login");
+
+  // 🔹 Logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 relative">
-
       {/* Admin Profile */}
       <div className="absolute top-6 right-6">
         <div className="relative">
@@ -113,7 +137,6 @@ const AdminDashboard = () => {
       </div>
 
       <div className="space-y-8">
-
         {/* Booking List */}
         {activeTab === "bookings" && (
           <div className="bg-white p-6 rounded-lg shadow">
@@ -121,7 +144,7 @@ const AdminDashboard = () => {
             <table className="w-full table-auto text-left">
               <thead>
                 <tr className="bg-gray-100">
-                  {["User", "Room", "Status", "Check-In", "Check-Out", "Action"].map((header) => (
+                  {["User", "Room", "Status", "Action"].map((header) => (
                     <th key={header} className="p-4 text-gray-700">{header}</th>
                   ))}
                 </tr>
@@ -131,8 +154,6 @@ const AdminDashboard = () => {
                   <tr key={b.id} className="hover:bg-gray-50 transition">
                     <td className="p-4">{b.user}</td>
                     <td className="p-4">{b.room}</td>
-                    <td className="p-4">{new Date(b.checkIn).toLocaleDateString("id-ID")}</td>
-                    <td className="p-4">{new Date(b.checkOut).toLocaleDateString("id-ID")}</td>
                     <td className="p-4">{b.status}</td>
                     <td className="p-4 flex space-x-4">
                       <TrashIcon className={iconClass} onClick={() => handleCancelBooking(b.id)} />
@@ -195,17 +216,25 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50 transition">
-                    <td className="p-4 flex items-center space-x-2">
-                      👤 <span>{u.name || "-"}</span>
-                    </td>
-                    <td className="p-4">{u.email}</td>
-                    <td className="p-4 flex space-x-4">
-                      <TrashIcon className={iconClass} onClick={() => handleDeleteUser(u.id)} />
+                {users.length > 0 ? (
+                  users.map((u) => (
+                    <tr key={u._id} className="hover:bg-gray-50 transition">
+                      <td className="p-4 flex items-center space-x-2">
+                        👤 <span>{u.name || "-"}</span>
+                      </td>
+                      <td className="p-4">{u.email}</td>
+                      <td className="p-4 flex space-x-4">
+                        <TrashIcon className={iconClass} onClick={() => handleDeleteUser(u._id)} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="text-center py-4 text-gray-500">
+                      No users found.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

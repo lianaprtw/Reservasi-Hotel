@@ -1,36 +1,61 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios"; // 🟢 Import axios untuk koneksi ke backend
 
 const Register = () => {
   const navigate = useNavigate();
 
-  // State untuk input
-  const [name, setName] = useState("");
+  // 🧩 State untuk menyimpan input user
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = (e) => {
-    e.preventDefault(); //mencegah reload halaman saat form disubmit
+  // 🧠 Fungsi ketika user menekan tombol Register
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // Simulasi proses register berhasil
-    alert("Registration successful! Please login."); //menampilkna notifasi sederhana
-    navigate("/login"); // arahkan ke halaman login
+    try {
+      // 🔗 Kirim data ke backend
+      const response = await axios.post(
+        "http://localhost:5000/api/users/register",
+        {
+          username,
+          email,
+          phone,
+          country,
+          password,
+        }
+      );
+
+      if (response.status === 201) {
+        alert("Registration successful! Please login.");
+        navigate("/login"); // 🔀 Arahkan ke halaman login
+      }
+    } catch (err) {
+      // ❌ Jika error dari backend
+      if (err.response) {
+        setError(
+          err.response.data.message || "Registration failed. Try again."
+        );
+      } else {
+        // ⚠️ Jika server tidak bisa dihubungi
+        setError("Cannot connect to server. Please check backend.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
-
-  // Tombol aktif jika semua input terisi
-  const isFormValid =
-    name.trim() &&
-    email.trim() &&
-    phone.trim() &&
-    country.trim() &&
-    password.trim();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white shadow-lg rounded-2xl w-[850px] flex overflow-hidden">
-        {/* Bagian Kiri */}
+        {/* Bagian kiri */}
         <div className="w-1/2 bg-gray-50 flex flex-col justify-center items-center p-10">
           <h1 className="text-3xl font-semibold text-[#7C6A46] mb-2">
             Puri Indah
@@ -40,7 +65,7 @@ const Register = () => {
           </p>
         </div>
 
-        {/* Bagian Kanan (Form input) */}
+        {/* Bagian kanan (form register) */}
         <div className="w-1/2 p-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
             Create Account
@@ -49,14 +74,15 @@ const Register = () => {
           <form className="space-y-4" onSubmit={handleRegister}>
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Name
+                Username
               </label>
               <input
                 type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
+                required
               />
             </div>
 
@@ -66,10 +92,11 @@ const Register = () => {
               </label>
               <input
                 type="email"
-                placeholder="name@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
+                placeholder="name@gmail.com"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
+                required
               />
             </div>
 
@@ -79,10 +106,10 @@ const Register = () => {
               </label>
               <input
                 type="text"
-                placeholder="With Country Code"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
+                placeholder="With Country Code"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
               />
             </div>
 
@@ -92,10 +119,10 @@ const Register = () => {
               </label>
               <input
                 type="text"
-                placeholder="Country Name"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
+                placeholder="Country Name"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
               />
             </div>
 
@@ -105,40 +132,42 @@ const Register = () => {
               </label>
               <input
                 type="password"
-                placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-coffee"
+                placeholder="Min. 6 characters"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
+                required
               />
             </div>
 
-            {/* teks  persetujuan */}
+            {/* Pesan error kalau gagal */}
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+
             <p className="text-xs text-gray-500">
               By signing up you agree to our{" "}
-              <span className="text-coffee font-medium">
+              <span className="text-[#7C6A46] font-medium">
                 terms and conditions
               </span>
               .
             </p>
 
-            {/* tombol register */}
             <button
               type="submit"
-              disabled={!isFormValid}
-              className={`w-full py-2 rounded-md transition ${
-                isFormValid
-                  ? "bg-[#7C6A46] text-white hover:bg-[#7A634A]"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+              disabled={loading}
+              className="w-full bg-[#7C6A46] text-white py-2 rounded-md hover:bg-[#7A634A] transition disabled:opacity-60"
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
 
-          {/* tautan ke halaman login */}
           <p className="text-sm text-center text-gray-600 mt-4">
             Already have an account?{" "}
-            <Link to="/login" className="text-coffee font-medium hover:underline">
+            <Link
+              to="/login"
+              className="text-[#7C6A46] font-medium hover:underline"
+            >
               Login
             </Link>
           </p>

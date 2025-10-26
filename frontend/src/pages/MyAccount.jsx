@@ -9,13 +9,15 @@ import {
 } from "react-icons/fa";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import axios from "axios";
 
 const MyAccount = () => {
   const defaultProfile = [
     { label: "Name", value: "Ni Kadek Liana Pratiwi" },
-    { label: "Display Name", value: "Liana Tantik" },
+    { label: "Username", value: "liana123" },
     { label: "Email Address", value: "liana@example.com" },
     { label: "Phone Number", value: "+628123456789" },
+    { label: "Country", value: "Indonesia" },
     { label: "Date of Birth", value: "2000-12-12" },
     { label: "Nationality", value: "Indonesia" },
     { label: "Gender", value: "Female" },
@@ -28,28 +30,58 @@ const MyAccount = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
 
-  // 🔹 Ambil data dari localStorage saat pertama kali load
+  // 🔹 Load data dari backend atau localStorage saat komponen pertama kali mount
   useEffect(() => {
-    const savedProfile = localStorage.getItem("profileData");
-    const savedImage = localStorage.getItem("profileImage");
+    const fetchUserData = async () => {
+      const token = localStorage.getItem("token");
+      const savedProfile = localStorage.getItem("profileData");
+      const savedImage = localStorage.getItem("profileImage");
 
-    if (savedProfile) {
-      setProfileData(JSON.parse(savedProfile));
-    }
-    if (savedImage) {
-      setProfileImage(savedImage);
-    }
+      if (savedProfile) setProfileData(JSON.parse(savedProfile));
+      if (savedImage) setProfileImage(savedImage);
+
+      if (token) {
+        try {
+          const res = await axios.get("http://localhost:5000/api/users/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const user = res.data;
+
+          const backendProfile = [
+            { label: "Name", value: user.name || "" },
+            { label: "Username", value: user.username || "" },
+            { label: "Email Address", value: user.email || "" },
+            { label: "Phone Number", value: user.phone || "" },
+            { label: "Country", value: user.country || "" },
+            { label: "Date of Birth", value: user.dob || "" },
+            { label: "Nationality", value: user.nationality || "" },
+            { label: "Gender", value: user.gender || "" },
+            { label: "Address", value: user.address || "" },
+          ];
+
+          setProfileData(backendProfile);
+          localStorage.setItem("profileData", JSON.stringify(backendProfile));
+
+          if (user.profileImage) {
+            setProfileImage(user.profileImage);
+            localStorage.setItem("profileImage", user.profileImage);
+          }
+        } catch (err) {
+          console.warn("⚠️ Gagal ambil data dari backend, gunakan localStorage:", err);
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
-  // 🔹 Simpan data ke localStorage setiap kali ada perubahan
+  // 🔹 Simpan data ke localStorage dan update Navbar
   const updateLocalStorage = (data) => {
     localStorage.setItem("profileData", JSON.stringify(data));
-
-    // Simpan juga Display Name dan Profile Image terpisah untuk Navbar
-    const displayName = data.find((item) => item.label === "Display Name")?.value;
+    const displayName =
+      data.find((item) => item.label === "Name" || item.label === "Username")
+        ?.value || "";
     if (displayName) localStorage.setItem("displayName", displayName);
-
-    // Trigger event agar Navbar langsung update
     window.dispatchEvent(new Event("storage"));
   };
 
@@ -58,14 +90,27 @@ const MyAccount = () => {
     setTempValue(value);
   };
 
-  const handleSave = (index) => {
+  // 🔹 Simpan ke backend & localStorage
+  const handleSave = async (index) => {
     const updatedData = [...profileData];
     updatedData[index].value = tempValue;
     setProfileData(updatedData);
     setEditIndex(null);
 
-    // 🔹 Simpan semua perubahan ke localStorage
     updateLocalStorage(updatedData);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const key = updatedData[index].label.toLowerCase().replace(/ /g, "_");
+        const payload = { [key]: tempValue };
+        await axios.patch("http://localhost:5000/api/users/me", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch (err) {
+      console.error("Update ke backend gagal:", err);
+    }
   };
 
   const handleCancel = () => {
@@ -78,20 +123,18 @@ const MyAccount = () => {
       const imageURL = URL.createObjectURL(file);
       setProfileImage(imageURL);
       localStorage.setItem("profileImage", imageURL);
-
-      // 🔹 Update Navbar real-time
       window.dispatchEvent(new Event("storage"));
       setShowPhotoOptions(false);
+      // 🔹 Nanti bisa ditambah upload ke backend (Multer)
     }
   };
 
   const handleRemovePhoto = () => {
     setProfileImage(null);
     localStorage.removeItem("profileImage");
-
-    // 🔹 Update Navbar real-time
     window.dispatchEvent(new Event("storage"));
     setShowPhotoOptions(false);
+    // 🔹 Bisa tambahkan API call untuk hapus foto di backend
   };
 
   return (
@@ -104,7 +147,7 @@ const MyAccount = () => {
         </h2>
 
         <div className="flex justify-between items-start">
-          {/* 🔹 Tabel Data Akun */}
+          {/* 🔹 Tabel Data Profil */}
           <table className="w-3/4 border-collapse">
             <tbody>
               {profileData.map((item, index) => (
