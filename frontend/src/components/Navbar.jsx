@@ -13,7 +13,7 @@ const Navbar = () => {
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  // 🔹 Ambil data dari localStorage dan update realtime
+  // 🔹 Ambil data dari localStorage dan update secara realtime
   useEffect(() => {
     const savedImage = localStorage.getItem("profileImage");
     const savedName = localStorage.getItem("displayName");
@@ -21,7 +21,7 @@ const Navbar = () => {
     if (savedImage) setProfileImage(savedImage);
     if (savedName) setDisplayName(savedName);
 
-    // Dengarkan perubahan dari localStorage (real-time)
+    // Dengarkan perubahan localStorage (misalnya saat login/logout)
     const handleStorageChange = () => {
       const updatedName = localStorage.getItem("displayName");
       const updatedImage = localStorage.getItem("profileImage");
@@ -34,7 +34,7 @@ const Navbar = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Tutup dropdown saat klik di luar
+  // Tutup dropdown kalau klik di luar area profil
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -45,8 +45,17 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 🔸 Logout: hapus semua data user & arahkan ke login
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("displayName");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("profileImage");
+
+    setDisplayName("Guest");
+    setProfileImage(null);
+    window.dispatchEvent(new Event("storage"));
     navigate("/login");
   };
 
@@ -54,13 +63,13 @@ const Navbar = () => {
 
   return (
     <nav className="flex justify-between items-center py-4 px-10 bg-white shadow-sm relative">
-      {/* Logo */}
-      <div className="text-center">
+      {/* 🔹 Logo */}
+      <div className="text-center cursor-pointer" onClick={() => navigate("/home")}>
         <h1 className="text-xl font-semibold text-[#6B4A2B]">Puri Indah</h1>
         <p className="text-xs text-gray-500 tracking-[0.2em]">HOTEL</p>
       </div>
 
-      {/* Menu */}
+      {/* 🔹 Menu navigasi */}
       <ul className="flex space-x-8 text-gray-700 font-medium">
         <li>
           <Link
@@ -88,9 +97,12 @@ const Navbar = () => {
         </li>
       </ul>
 
-      {/* Profil */}
+      {/* 🔹 Profil Dropdown */}
       <div className="relative" ref={dropdownRef}>
-        <div onClick={toggleDropdown} className="flex items-center space-x-2 cursor-pointer">
+        <div
+          onClick={toggleDropdown}
+          className="flex items-center space-x-2 cursor-pointer select-none"
+        >
           {profileImage ? (
             <img
               src={profileImage}
@@ -103,7 +115,6 @@ const Navbar = () => {
           <span className="text-gray-700 font-medium">{displayName}</span>
         </div>
 
-        {/* Dropdown Menu */}
         {isOpen && (
           <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg border border-gray-100 py-2 z-50">
             <Link
