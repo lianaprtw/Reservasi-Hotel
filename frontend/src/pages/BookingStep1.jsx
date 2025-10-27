@@ -8,86 +8,90 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 
-
-
 const BookingStep1 = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   // ✅ Ambil data kamar dari RoomDetail
-  const { id, roomName, price, location: loc, person, checkIn, checkOut } = location.state || {
-    id: 1,
-    roomName: "The Royal Room",
-    price: 200,
-  };
+  const { id, roomName, price } = location.state || {};
 
+  // ✅ Validasi data yang diterima
+  useEffect(() => {
+    if (!id || !roomName || !price) {
+      alert("❌ Data kamar tidak ditemukan. Silakan pilih kamar terlebih dahulu.");
+      navigate("/rooms");
+    }
+  }, [id, roomName, price, navigate]);
+
+  // ✅ State untuk tanggal dan perhitungan total
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(
-    new Date(new Date().getTime() + 1 * 24 * 60 * 60 * 1000)
+    new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
   );
   const [days, setDays] = useState(1);
-  const pricePerDay = price;
-  const [total, setTotal] = useState(pricePerDay);
+  const [total, setTotal] = useState(price || 0);
 
+  // ✅ Hitung total otomatis setiap tanggal berubah
   useEffect(() => {
     const timeDiff = endDate.getTime() - startDate.getTime();
     const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    setDays(calculatedDays > 0 ? calculatedDays : 1);
-    setTotal((calculatedDays > 0 ? calculatedDays : 1) * pricePerDay);
-  }, [startDate, endDate, pricePerDay]);
+    const validDays = calculatedDays > 0 ? calculatedDays : 1;
 
+    setDays(validDays);
+    setTotal(validDays * (price || 0));
+  }, [startDate, endDate, price]);
+
+  // ✅ Fungsi handle booking
   const handleBookNow = async () => {
-  try {
-    // Ambil data dari location.state
-    const { id: roomId, roomName, price } = location.state || {};
+    try {
+      // Siapkan data booking
+      const bookingPayload = {
+        roomId: id, // dari RoomDetail
+        userId: 1, // sementara hardcode
+        roomName,
+        checkIn: startDate.toISOString().split("T")[0],
+        checkOut: endDate.toISOString().split("T")[0],
+        days,
+        total,
+      };
 
-    // Payload lengkap sesuai backend
-    const bookingPayload = {
-      roomId,                     // ID kamar
-      userId: 1,                  // ID user (hardcode)
-      roomName,                   // Nama kamar
-      checkIn: startDate.toISOString().split("T")[0],
-      checkOut: endDate.toISOString().split("T")[0],
-      days,
-      total: total,         // Total pembayaran
-    };
+      // Validasi sebelum kirim
+      if (!bookingPayload.roomId || !bookingPayload.userId) {
+        alert("❌ Data kamar atau user tidak ditemukan.");
+        return;
+      }
 
-    // Validasi sebelum kirim
-    if (!bookingPayload.roomId || !bookingPayload.userId) {
-      alert(
-        "Data kamar atau user tidak ditemukan. Coba lagi dari halaman Rooms."
+      // Kirim ke backend
+      const response = await axios.post(
+        "http://localhost:3001/api/bookings",
+        bookingPayload
       );
-      return;
+
+      if (!response.data || !response.data._id) {
+        alert("Booking gagal, response dari server tidak valid.");
+        return;
+      }
+
+      // ✅ Navigate ke step 2 sambil bawa data booking
+      navigate("/booking-step2", { state: { ...response.data } });
+    } catch (error) {
+      console.error("❌ Booking failed:", error.response?.data || error.message);
+      alert(
+        `❌ Booking gagal. ${
+          error.response?.data?.message || "Silakan coba lagi nanti."
+        }`
+      );
     }
+  };
 
-    // POST ke backend
-    const response = await axios.post(
-      "http://localhost:3001/api/bookings",
-      bookingPayload
-    );
-
-    // Pastikan backend mengembalikan data booking
-    if (!response.data || !response.data._id) {
-      alert("Booking gagal, response dari server tidak valid.");
-      return;
-    }
-
-    // Navigate ke step 2 dengan data booking dari backend
-    navigate("/booking-step2", { state: { ...response.data } });
-
-  } catch (error) {
-    console.error("Booking failed:", error.response?.data || error.message);
-    alert(
-      `❌ Booking failed. ${error.response?.data?.message || "Please try again."}`
-    );
-  }
-};
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
       <div className="flex-1 flex flex-col items-center py-10 px-5">
-        <h2 className="text-2xl font-bold text-[#7C6A46] mb-2">Booking Information</h2>
+        <h2 className="text-2xl font-bold text-[#7C6A46] mb-2">
+          Booking Information
+        </h2>
         <p className="text-gray-400 mb-10 text-center">
           Please fill up the blank fields below
         </p>
@@ -101,6 +105,7 @@ const BookingStep1 = () => {
               className="rounded-lg w-[320px] h-[200px] object-cover mb-3"
             />
             <h3 className="font-semibold text-[#7C6A46] text-lg">{roomName}</h3>
+            <p className="text-gray-500 mt-1">${price} / day</p>
           </div>
 
           {/* Right Side - Booking Details */}
@@ -116,7 +121,7 @@ const BookingStep1 = () => {
                   startDate={startDate}
                   endDate={endDate}
                   minDate={new Date()}
-                  className="bg-gray-100 text-gray-600 w-full"
+                  className="bg-gray-100 text-gray-600 w-full outline-none"
                 />
               </div>
 
@@ -130,13 +135,15 @@ const BookingStep1 = () => {
                   startDate={startDate}
                   endDate={endDate}
                   minDate={startDate}
-                  className="bg-gray-100 text-gray-600 w-full"
+                  className="bg-gray-100 text-gray-600 w-full outline-none"
                 />
               </div>
 
               <p className="text-gray-400">
                 You will pay{" "}
-                <span className="text-[#7C6A46] font-semibold">${total} USD</span>{" "}
+                <span className="text-[#7C6A46] font-semibold">
+                  ${total} USD
+                </span>{" "}
                 for{" "}
                 <span className="font-semibold text-[#7C6A46]">{days} Days</span>
               </p>
@@ -146,16 +153,15 @@ const BookingStep1 = () => {
             <div className="flex flex-col mt-8">
               <button
                 onClick={handleBookNow}
-                className="bg-[#7C6A46] text-white py-2 rounded-md font-medium hover:bg-[#7C6A46] transition duration-300"
+                className="bg-[#7C6A46] text-white py-2 rounded-md font-medium hover:bg-[#6b553f] transition duration-300"
               >
                 Book Now
               </button>
 
-              {/* 🔹 Cancel button with hover & transition */}
               <button
                 type="button"
-                className="border border-gray-300 text-gray-500 py-2 rounded-md font-medium mt-3 hover:bg-gray-200 hover:text-[#7A5232] transition duration-300"
                 onClick={() => navigate(`/rooms/${id}`)}
+                className="border border-gray-300 text-gray-500 py-2 rounded-md font-medium mt-3 hover:bg-gray-200 hover:text-[#7A5232] transition duration-300"
               >
                 Cancel
               </button>

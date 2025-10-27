@@ -58,7 +58,7 @@ const RoomDetail = () => {
 
   const handleBookNow = () => {
     navigate("/booking", {
-      state: { roomName: room.name, price: room.price },
+      state: { id: room._id, roomName: room.name, price: room.price },
     });
   };
 

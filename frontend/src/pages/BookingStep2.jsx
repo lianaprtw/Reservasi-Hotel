@@ -42,7 +42,7 @@ const BookingStep2 = () => {
 
     const paymentData = {
       bookingId,
-      paymentMethod: "Credit Card",
+      paymentMethod: "credit_card",
       cardDetails: { cardName, cardNumber, expiry, cvv },
       amount: booking.total, 
     };
