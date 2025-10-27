@@ -18,10 +18,6 @@ const MyAccount = () => {
     { label: "Email Address", value: "liana@example.com" },
     { label: "Phone Number", value: "+628123456789" },
     { label: "Country", value: "Indonesia" },
-    // { label: "Date of Birth", value: "2000-12-12" },
-    // { label: "Nationality", value: "Indonesia" },
-    // { label: "Gender", value: "Female" },
-    // { label: "Address", value: "Jl. Sunset Road No. 30, Kuta, Bali" },
   ];
 
   const [profileData, setProfileData] = useState(defaultProfile);
@@ -30,7 +26,7 @@ const MyAccount = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
 
-  // 🔹 Ambil data dari backend / localStorage saat halaman dimuat
+  // 🔹 Ambil data user dari backend / localStorage
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem("token");
@@ -53,16 +49,11 @@ const MyAccount = () => {
             { label: "Email Address", value: user.email || "" },
             { label: "Phone Number", value: user.phoneNo || "" },
             { label: "Country", value: user.country || "" },
-            // { label: "Date of Birth", value: user.dob || "" },
-            // { label: "Nationality", value: user.nationality || "" },
-            // { label: "Gender", value: user.gender || "" },
-            // { label: "Address", value: user.address || "" },
           ];
 
           setProfileData(backendProfile);
           localStorage.setItem("profileData", JSON.stringify(backendProfile));
 
-          // Simpan nama ke localStorage agar Navbar menampilkan displayName
           const displayName = user.name || user.username || "Guest";
           localStorage.setItem("displayName", displayName);
 
@@ -74,7 +65,7 @@ const MyAccount = () => {
           // 🔄 Refresh Navbar
           window.dispatchEvent(new Event("storage"));
         } catch (err) {
-          console.warn("⚠️ Gagal ambil data user, gunakan localStorage:", err);
+          console.warn("⚠ Gagal ambil data user, gunakan localStorage:", err);
         }
       }
     };
@@ -82,12 +73,11 @@ const MyAccount = () => {
     fetchUserData();
   }, []);
 
-  // 🔹 Update localStorage & trigger update ke Navbar
+  // 🔹 Simpan perubahan lokal ke localStorage + refresh navbar
   const updateLocalStorage = (data) => {
     localStorage.setItem("profileData", JSON.stringify(data));
     const displayName =
-      data.find((i) => i.label === "Name" || i.label === "Username")?.value ||
-      "";
+      data.find((i) => i.label === "Name" || i.label === "Username")?.value || "";
     if (displayName) localStorage.setItem("displayName", displayName);
     window.dispatchEvent(new Event("storage"));
   };
@@ -96,8 +86,8 @@ const MyAccount = () => {
     setEditIndex(index);
     setTempValue(value);
   };
- 
-  // 🔹 Simpan perubahan ke backend & localStorage
+
+  // 🔹 Simpan perubahan ke backend (pakai PUT)
   const handleSave = async (index) => {
     const updatedData = [...profileData];
     updatedData[index].value = tempValue;
@@ -108,23 +98,30 @@ const MyAccount = () => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        const key = updatedData[index].label.toLowerCase().replace(/ /g, "_");
+        // Mapping field label ke key di backend
+        const labelMap = {
+          Name: "name",
+          Username: "username",
+          "Email Address": "email",
+          "Phone Number": "phoneNo",
+          Country: "country",
+        };
+
+        const key = labelMap[updatedData[index].label];
         const payload = { [key]: tempValue };
 
-        await axios.patch("http://localhost:5000/api/users/me", payload, {
+        await axios.put("http://localhost:5000/api/users/me", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
     } catch (err) {
-      console.error("Update ke backend gagal:", err);
+      console.error("❌ Update ke backend gagal:", err);
     }
   };
 
-  const handleCancel = () => {
-    setEditIndex(null);
-  };
+  const handleCancel = () => setEditIndex(null);
 
-  // 🔹 Ganti foto profil (preview + simpan ke localStorage)
+  // 🔹 Ganti foto profil (preview + localStorage)
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
