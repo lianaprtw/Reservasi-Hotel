@@ -13,27 +13,26 @@ import { roomsData } from "../data/rooms";
 const Home = () => {
   const navigate = useNavigate();
 
-  // inisialiasi state input
+  // state input
   const [loc, setLoc] = useState("");
-  const [roomType, setRoomType] = useState(""); 
+  const [roomType, setRoomType] = useState("");
   const [person, setPerson] = useState("1");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
 
-//   const locationOptions = ["Ubud", "Kuta", "Jakarta", "Tokyo", "Singapore"];
-  const roomTypeOptions = ["The Royal Room", "The Deluxe Suite", "The Ocean View"]; //daftar type kamar yang tersedia
+  // const locationOptions = ["Ubud", "Kuta", "Jakarta", "Tokyo", "Singapore"];
+  const roomTypeOptions = ["The Royal Room", "The Deluxe Suite", "The Ocean View"];
 
-  const isBookNowActive = roomType && person && checkIn && checkOut; // tombol aktif jika semua input terisi
+  const isBookNowActive = roomType && person && checkIn && checkOut;
 
-  // fungsi booking
   const handleBookNow = () => {
     if (!isBookNowActive) return;
 
     const selectedRoom = roomsData.find((room) => room.name === roomType);
 
-    navigate("/booking", { //mengarahakn ke halaman booking dengan membawa data booking dikirim lewat state
+    navigate("/booking", {
       state: {
-        // location: loc,
+        location: loc,
         roomName: selectedRoom?.name || roomType,
         price: selectedRoom?.price || 0,
         roomId: selectedRoom?.id,
@@ -44,7 +43,6 @@ const Home = () => {
     });
   };
 
-  // data fasilitas hotel
   const facilities = [
     { icon: "ri-wifi-line", label: "Wifi" },
     { icon: "ri-cup-line", label: "Breakfast" },
@@ -210,7 +208,7 @@ const Home = () => {
 
       {/* Rooms Section */}
       <section className="bg-amber-50 py-16 px-10 text-center">
-        <h2 className="text-3xl font-bold mb-3">Luxurious Rooms</h2>
+        <h2 className="text-3xl font-bold mb-3">Our Rooms</h2>
         <p className="text-gray-500 mb-8">
           All rooms are designed for your comfort
         </p>
@@ -219,20 +217,20 @@ const Home = () => {
           {[
             {
               img: room1Img,
-              title: "Television set, Extra sheets and Breakfast",
-              available: "2 Rooms available",
+              title: "Television set, Extra sheets and Breakfast, etc.",
+              available: "The Royal Room",
             },
             {
               img: room2Img,
               title:
-                "Television set, Extra sheets, Breakfast, and fireplace",
-              available: "4 Rooms available",
+                "Television set, Extra sheets, Breakfast, and fireplace, etc.",
+              available: "The Deluxe Suite",
             },
             {
               img: room3Img,
               title:
-                "Television set, Extra sheets, Breakfast, and bed rest",
-              available: "8 Rooms available",
+                "Television set, Extra sheets, Breakfast, and bed rest, etc.",
+              available: "The Ocean View",
             },
           ].map((room, i) => (
             <div
@@ -241,7 +239,7 @@ const Home = () => {
             >
               <img src={room.img} alt="room" className="w-full h-56 object-cover" />
               <div className="p-5 text-left">
-                <span className="text-sm text-amber-700 font-semibold">
+                <span className="text-lg text-amber-700 font-semibold">
                   {room.available}
                 </span>
                 <p className="mt-2 text-gray-700">{room.title}</p>
