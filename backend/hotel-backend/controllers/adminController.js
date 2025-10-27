@@ -2,65 +2,89 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// Fungsi generate token JWT
 const generateToken = (id, role) =>
   jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-// REGISTER ADMIN
+// ====================== REGISTER ADMIN ======================
+// ====================== REGISTER ADMIN ======================
 const registerAdmin = async (req, res) => {
   try {
     const { name, username, email, password } = req.body;
-    if (!username || !password)
+
+    if (!username || !password) {
       return res.status(400).json({ message: "Username & password required" });
+    }
 
     const exists = await User.findOne({ username });
-    if (exists) return res.status(400).json({ message: "Admin already exists" });
+    if (exists) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // ❌ Jangan hash manual lagi
     const admin = await User.create({
       name,
       username,
       email,
-      password: hashedPassword,
+      password, // langsung aja
       role: "admin",
     });
 
     res.status(201).json({
-      _id: admin._id,
-      name: admin.name,
-      username: admin.username,
-      email: admin.email,
-      role: admin.role,
-      token: generateToken(admin._id, admin.role),
+      message: "Admin registered successfully. Please login to get your token.",
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role,
+      },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Register error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// LOGIN ADMIN
+
+// ====================== LOGIN ADMIN ======================
 const loginAdmin = async (req, res) => {
   try {
     const { username, password } = req.body;
+
+    // Cek apakah admin ada
     const admin = await User.findOne({ username, role: "admin" });
-    if (!admin || !(await bcrypt.compare(password, admin.password)))
+    if (!admin) {
       return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    // Cek password benar atau tidak
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    // ✅ Hanya kirim token saat login berhasil
+    const token = generateToken(admin._id, admin.role);
 
     res.json({
-      _id: admin._id,
-      name: admin.name,
-      username: admin.username,
-      email: admin.email,
-      role: admin.role,
-      token: generateToken(admin._id, admin.role),
+      message: "Login successful",
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role,
+      },
+      token,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// CRUD USER (ADMIN ONLY)
+// ====================== CRUD USER (ADMIN ONLY) ======================
 const getUsers = async (req, res) => {
   const users = await User.find({ role: "user" }).select("-password");
   res.json(users);
@@ -80,7 +104,8 @@ const updateUser = async (req, res) => {
   user.email = req.body.email || user.email;
   user.phoneNo = req.body.phone || user.phoneNo;
   user.country = req.body.country || user.country;
-  if (req.body.password) user.password = await bcrypt.hash(req.body.password, 10);
+  if (req.body.password)
+    user.password = await bcrypt.hash(req.body.password, 10);
   if (req.body.role) user.role = req.body.role;
 
   const updated = await user.save();
@@ -94,4 +119,11 @@ const deleteUser = async (req, res) => {
   res.json({ message: "User deleted successfully" });
 };
 
-module.exports = { registerAdmin, loginAdmin, getUsers, getUserById, updateUser, deleteUser };
+module.exports = {
+  registerAdmin,
+  loginAdmin,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+};

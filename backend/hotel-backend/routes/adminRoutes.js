@@ -9,13 +9,27 @@ const {
   updateUser,
   deleteUser,
 } = require("../controllers/adminController");
+const User = require("../models/userModel"); // tambahkan ini untuk query langsung ke DB
 
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 
+// ✅ route baru untuk ambil semua admin
+router.get("/admins", protect, admin, async (req, res) => {
+  try {
+    const admins = await User.find({ role: "admin" }).select("-password");
+    res.json(admins);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 router.get("/users", protect, admin, getUsers);
-router.route("/users/:id").get(protect, admin, getUserById)
-                           .put(protect, admin, updateUser)
-                           .delete(protect, admin, deleteUser);
+router
+  .route("/users/:id")
+  .get(protect, admin, getUserById)
+  .put(protect, admin, updateUser)
+  .delete(protect, admin, deleteUser);
 
 module.exports = router;
