@@ -9,7 +9,7 @@ app.use(express.json());
 
 // 🔹 Tambahkan cors middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // hanya izinkan frontend Vite
+  origin: '*', // 
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
