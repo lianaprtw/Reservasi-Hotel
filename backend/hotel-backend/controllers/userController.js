@@ -13,7 +13,9 @@ const registerUser = async (req, res) => {
 
     const exists = await User.findOne({ $or: [{ username }, { email }] });
     if (exists)
-      return res.status(400).json({ message: "Username or email already exists" });
+      return res
+        .status(400)
+        .json({ message: "Username or email already exists" });
 
     const user = await User.create({
       name: name || username,
@@ -68,27 +70,41 @@ const getUserProfile = async (req, res) => {
   res.json(user);
 };
 
-// UPDATE USER PROFILE
+// UPDATE USER PROFILE (PUT)
 const updateUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
-  if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  user.name = req.body.name || user.name;
-  user.email = req.body.email || user.email;
-  user.phoneNo = req.body.phone || user.phoneNo;
-  user.country = req.body.country || user.country;
-  if (req.body.password) user.password = req.body.password;
+    // 🔹 Update hanya field yang dikirim
+    const allowedFields = [
+      "name",
+      "username",
+      "email",
+      "phoneNo",
+      "country",
+      "password",
+    ];
+    allowedFields.forEach((field) => {
+      if (req.body[field]) {
+        user[field] = req.body[field];
+      }
+    });
 
-  const updated = await user.save();
-  res.json({
-    _id: updated._id,
-    name: updated.name,
-    username: updated.username,
-    email: updated.email,
-    role: updated.role,
-    phoneNo: updated.phoneNo,
-    country: updated.country,
-  });
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      phoneNo: updatedUser.phoneNo,
+      country: updatedUser.country,
+    });
+  } catch (error) {
+    console.error("❌ Update profile failed:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
-
 module.exports = { registerUser, authUser, getUserProfile, updateUserProfile };

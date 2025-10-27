@@ -33,14 +33,29 @@ const Login = () => {
 
       const response = await axios.post(endpoint, body);
 
-      const { token, role: backendRole } = response.data;
+      // 🔹 Ambil data dari backend
+      const { token, role: backendRole, user } = response.data;
       const role = backendRole || (isAdmin ? "admin" : "user");
 
+      // 🔹 Simpan token & role
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
 
+      // 🟢 Tambahan: simpan nama user agar tampil di Navbar & MyAccount
+      const displayName = user?.username || username || "Guest";
+      localStorage.setItem("displayName", displayName);
+
+      // 🟢 Simpan data user lengkap kalau ada (untuk MyAccount)
+      if (user) {
+        localStorage.setItem("userData", JSON.stringify(user));
+      }
+
+      // 🟢 Trigger event untuk update Navbar secara realtime
+      window.dispatchEvent(new Event("storage"));
+
       setLoading(false);
 
+      // 🔹 Arahkan ke halaman sesuai role
       if (role === "admin") {
         navigate("/admin");
       } else {
@@ -85,8 +100,8 @@ const Login = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your username"
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
-                required={!isAdmin} // ❌ Hanya required kalau user biasa
-                disabled={isAdmin} // 🟢 Dinonaktifkan kalau login admin
+                required={!isAdmin}
+                disabled={isAdmin}
               />
             </div>
 
@@ -100,20 +115,20 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
-                required={!isAdmin} // ❌ Hanya required kalau user biasa
-                disabled={isAdmin} // 🟢 Dinonaktifkan kalau login admin
+                required={!isAdmin}
+                disabled={isAdmin}
               />
             </div>
 
             {/* Checkbox login as admin */}
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 checked={isAdmin}
                 onChange={(e) => setIsAdmin(e.target.checked)}
               />
               <label className="text-gray-600 text-sm">Login as Admin</label>
-            </div>
+            </div> */}
 
             {error && (
               <p className="text-red-500 text-sm text-center">{error}</p>
