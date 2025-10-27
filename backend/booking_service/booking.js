@@ -19,11 +19,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// Connect ke MongoDB
-mongoose.connect(process.env.MONGO_URL, {})
+mongoose.connect(process.env.MONGO_URI, {})
   .then(() => console.log('✅ Booking Service: MongoDB connected'))
-  .catch(err => console.error(err));
-
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 // RabbitMQ connection
 let channel, connection;
 async function connectRabbitMQ() {

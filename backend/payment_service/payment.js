@@ -33,15 +33,15 @@ async function connectRabbitMQ() {
         const booking = JSON.parse(msg.content.toString());
         console.log('📨 Received booking from RabbitMQ:', booking);
 
-        // // Simulasi payment otomatis
-        // const payment = new Payment({
-        //   bookingId: booking._id,
-        //   paymentMethod: 'Credit Card',
-        //   amount: booking.total,
-        //   status: 'pending', // status awal pending
-        // });
-        // await payment.save();
-        // console.log('✅ Payment record created for booking:', booking._id);
+      const payment = new Payment({
+        bookingId: booking._id,
+        paymentMethod: 'credit_card',
+        amount: booking.total
+  // status otomatis pending
+    });
+    await payment.save();
+    console.log('✅ Payment record created (status pending) for booking:', booking._id);
+
 
         channel.ack(msg);
       }

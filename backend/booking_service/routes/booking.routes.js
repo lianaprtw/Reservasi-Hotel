@@ -39,8 +39,10 @@ router.post('/', async (req, res) => {
     // Simpan ke database (ini memperbaiki error 'callback required')
     await booking.save();
 
-    // Gunakan fungsi publish dari middleware
-    await res.publishBooking(booking);
+    // Gunakan fungsi publish dari middleware (jika ada)
+    if (res.publishBooking) {
+      await res.publishBooking(booking);
+    }
 
     res.status(201).json(booking);
   } catch (err) {
@@ -49,11 +51,35 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 🔹 PUT update booking by ID
+router.put('/:id', async (req, res) => {
+  try {
+    const { roomId, userId, roomName, checkIn, checkOut, days, total } = req.body;
+
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { roomId, userId, roomName, checkIn, checkOut, days, total },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBooking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json({
+      message: 'Booking updated successfully',
+      data: updatedBooking
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // 🔹 DELETE booking by ID
 router.delete('/:id', async (req, res) => {
   try {
     const deletedBooking = await Booking.findByIdAndDelete(req.params.id);
-    if (!deletedBooking) return res.status(44).json({ message: 'Booking not found' });
+    if (!deletedBooking) return res.status(404).json({ message: 'Booking not found' });
     res.json({ message: 'Booking cancelled successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });

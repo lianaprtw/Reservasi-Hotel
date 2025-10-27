@@ -1,47 +1,53 @@
 const express = require('express');
 const router = express.Router();
-const cors = require('cors'); // 🔹 Tambahkan ini
+const cors = require('cors');
 const Payment = require('../models/payment.model');
 
-// 🔹 Tambahkan middleware CORS di router
+// ✅ Aktifkan CORS khusus route ini
 router.use(cors({
-  origin: 'http://localhost:5173', // alamat frontend
-  methods: ['POST','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  origin: 'http://localhost:5173', // frontend kamu (React)
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 🔹 Tangani preflight OPTIONS
+// ✅ Preflight (OPTIONS)
 router.options('/pay', (req, res) => {
   res.sendStatus(200);
 });
 
-// Route untuk melakukan pembayaran
+// ✅ POST /pay untuk melakukan pembayaran
 router.post('/pay', async (req, res) => {
   try {
     const { bookingId, paymentMethod, cardDetails, amount } = req.body;
 
-    // Validasi input
+    // 🛑 Validasi field wajib
     if (!bookingId || !paymentMethod || !amount) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: 'Missing required fields (bookingId, paymentMethod, amount)' });
     }
 
-    // Simulasi payment process
+    // 💳 Default cardDetails jika metode bukan kartu
+    const cardData = paymentMethod === 'credit_card' ? cardDetails : null;
+
     const payment = new Payment({
       bookingId,
       paymentMethod,
-      cardDetails,
-      amount,
-      status: 'completed' // Simulasi payment sukses
+      cardDetails: cardData,
+      amount
+  // status otomatis pending dari schema
     });
 
-    // Simpan ke database
+    // 💾 Save ke database
     await payment.save();
 
-    // Kirim response payment sukses
-    res.status(201).json(payment);
+    // ✅ Response sukses
+    res.status(201).json({
+      message: 'Payment successful',
+      data: payment
+    });
 
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error in /pay:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
