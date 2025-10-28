@@ -1,28 +1,64 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { FaCalendarAlt, FaUser, FaDoorOpen, FaMapMarkerAlt } from "react-icons/fa";
-import roomImage from "../assets/room1.png"; // ganti dengan gambar yang sesuai
+import axios from "axios";
+import roomImage from "../assets/room1.png"; // Ganti dengan gambar default
 
 const BookingDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Data contoh (nantinya bisa diganti fetch dari API)
-  const booking = {
-    id,
-    roomName: "The Royal Room",
-    location: "Puri Indah Hotel, Kuta, Bali",
-    checkIn: "20 Jan 2025",
-    checkOut: "22 Jan 2025",
-    guests: 2,
-    roomType: "Luxury Suite",
-    price: "Rp 1.200.000 / malam",
-    total: "Rp 2.400.000",
-    status: "Confirmed",
-    image: roomImage,
-  };
+  const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 Fetch booking berdasarkan ID
+  useEffect(() => {
+    const fetchBooking = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3001/api/bookings/${id}`);
+        const data = response.data;
+
+        // Format data agar lebih mudah digunakan
+        const formatted = {
+          ...data,
+          image: data.image || roomImage,
+          checkIn: new Date(data.checkIn).toLocaleDateString(),
+          checkOut: new Date(data.checkOut).toLocaleDateString(),
+          price: data.total ? `Rp ${data.total.toLocaleString()}` : "Rp 0",
+          location: data.location || "Lokasi tidak tersedia",
+          guests: data.guests || 2,
+          roomType: data.roomType || "Standard Room",
+        };
+
+        setBooking(formatted);
+      } catch (error) {
+        console.error("❌ Failed to fetch booking:", error);
+        alert("Gagal memuat detail booking.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBooking();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-600 text-lg">
+        Loading booking details...
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="flex justify-center items-center h-screen text-red-500 text-lg">
+        Booking tidak ditemukan.
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -83,17 +119,16 @@ const BookingDetail = () => {
             </div>
 
             <div className="mt-6 border-t border-gray-200 pt-4">
-              <p className="text-gray-500 text-sm">Price</p>
-              <p className="font-semibold text-gray-800">{booking.price}</p>
-
-              <p className="text-gray-500 text-sm mt-3">Total Payment</p>
-              <p className="text-2xl font-bold text-amber-700">{booking.total}</p>
+              <p className="text-gray-500 text-sm">Total Payment</p>
+              <p className="text-2xl font-bold text-amber-700">{booking.price}</p>
 
               <div className="mt-6">
                 <span
                   className={`px-4 py-2 rounded-full text-sm font-medium ${
-                    booking.status === "Confirmed"
+                    booking.status === "CONFIRMED"
                       ? "bg-green-100 text-green-700"
+                      : booking.status === "CANCELLED"
+                      ? "bg-red-100 text-red-700"
                       : "bg-yellow-100 text-yellow-700"
                   }`}
                 >
