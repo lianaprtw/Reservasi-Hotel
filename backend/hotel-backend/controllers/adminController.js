@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Fungsi generate token JWT
+// ====================== JWT GENERATOR ======================
 const generateToken = (id, role) =>
   jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
@@ -80,8 +80,7 @@ const loginAdmin = async (req, res) => {
 
 // ====================== CRUD USER (ADMIN ONLY) ======================
 
-// 🟢 hanya tampilkan user milik admin login
-// Ambil semua user role "user" (baik yang dibuat sendiri maupun oleh admin)
+// 🟢 Ambil semua user role "user"
 const getUsers = async (req, res) => {
   try {
     const users = await User.find({ role: "user" }).select("-password");
@@ -92,15 +91,15 @@ const getUsers = async (req, res) => {
   }
 };
 
-
-// 🟢 saat admin menambahkan user, simpan siapa pembuatnya
+// 🟢 Admin membuat user baru
 const createUser = async (req, res) => {
   try {
     const { name, username, email, password, phoneNo, country } = req.body;
 
     const exists = await User.findOne({ username });
-    if (exists)
+    if (exists) {
       return res.status(400).json({ message: "Username already exists" });
+    }
 
     const user = await User.create({
       name,
@@ -110,7 +109,7 @@ const createUser = async (req, res) => {
       phoneNo,
       country,
       role: "user",
-      createdBy: req.user._id, // ini kuncinya
+      createdBy: req.user._id, // siapa admin pembuatnya
     });
 
     res.status(201).json({
@@ -123,44 +122,57 @@ const createUser = async (req, res) => {
   }
 };
 
+// 🟢 Ambil user by ID
 const getUserById = async (req, res) => {
-  const user = await User.findOne({
-    _id: req.params.id,
-    createdBy: req.user._id, // hanya user milik admin ini
-  }).select("-password");
-
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user);
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    console.error("Get user by ID error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
+// 🟢 Update user
 const updateUser = async (req, res) => {
-  const user = await User.findOne({
-    _id: req.params.id,
-    createdBy: req.user._id,
-  });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  user.name = req.body.name || user.name;
-  user.email = req.body.email || user.email;
-  user.phoneNo = req.body.phoneNo || user.phoneNo;
-  user.country = req.body.country || user.country;
-  if (req.body.password)
-    user.password = await bcrypt.hash(req.body.password, 10);
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.phoneNo = req.body.phoneNo || user.phoneNo;
+    user.country = req.body.country || user.country;
+    if (req.body.password)
+      user.password = await bcrypt.hash(req.body.password, 10);
 
-  const updated = await user.save();
-  res.json(updated);
+    const updated = await user.save();
+    res.json(updated);
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
+// 🟢 Hapus user
 const deleteUser = async (req, res) => {
-  const user = await User.findOne({
-    _id: req.params.id,
-    createdBy: req.user._id,
-  });
-  if (!user) return res.status(404).json({ message: "User not found" });
-  await user.deleteOne();
-  res.json({ message: "User deleted successfully" });
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await user.deleteOne();
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
+// ====================== EXPORT ======================
 module.exports = {
   registerAdmin,
   loginAdmin,
