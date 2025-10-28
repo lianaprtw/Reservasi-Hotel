@@ -11,7 +11,7 @@ const {
 } = require('../controllers/bookingController'); // Sesuaikan path
 
 // Impor middleware keamanan
-const { protect } = require('../middleware/authMiddleware'); // Sesuaikan path
+const { protect, adminCheck } = require('../middleware/authMiddleware'); // 🔹 pastikan adminCheck sesuai
 
 // 🔹 POST /api/bookings
 // (Buat booking baru) - Dilindungi, user harus login
@@ -26,10 +26,15 @@ router.get('/mybookings', protect, getMyBookings);
 router.delete('/:id', protect, cancelBooking);
 
 
-// --- Rute Admin (Opsional) ---
+// --- Rute Admin (Tambahan, kode lama tetap utuh) ---
 // 🔹 GET /api/bookings
 // (Get SEMUA booking) - Dilindungi (Harusnya admin)
-// Anda perlu middleware `adminCheck` tambahan di sini
 // router.get('/', authMiddleware, adminCheck, getAllBookings);
 
+// ✅ RUTE BARU UNTUK ADMIN DASHBOARD
+// Aktif dan aman: menampilkan semua booking untuk dashboard admin
+router.get('/admin/all', protect, adminCheck, getAllBookings);
+
+
+// --- Akhir ---
 module.exports = router;
