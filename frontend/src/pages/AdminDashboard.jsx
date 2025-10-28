@@ -54,6 +54,39 @@ const AdminDashboard = () => {
     fetchUsers();
   }, [navigate]);
 
+  // 🔹 Fetch semua bookings dari backend (gabungan mybooking)
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        // 🔸 Ambil data dari service booking port 3001 (mybooking)
+        const res3001 = await axios.get("http://localhost:3001/api/bookings");
+        const formatted = res3001.data.map((b) => ({
+          ...b,
+          user: b.user || { name: b.fullName || "Unknown" },
+          room: { name: b.roomName || "Unknown Room" },
+          checkIn: b.checkIn,
+          checkOut: b.checkOut,
+          status: b.status || "Pending",
+        }));
+
+        // 🔸 Ambil juga dari service lama port 5000 (jika ada)
+        let res5000 = [];
+        try {
+          const resOld = await axios.get("http://localhost:5000/api/bookings");
+          res5000 = resOld.data;
+        } catch {
+          console.warn("⚠️ Booking service 5000 tidak ditemukan, skip...");
+        }
+
+        setBookings([...formatted, ...res5000]);
+      } catch (error) {
+        console.error("Failed to fetch bookings:", error);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
   // 🔹 Hapus user dari database
   const handleDeleteUser = async (id) => {
     try {
@@ -69,7 +102,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // CRUD functions
   // === CRUD ROOM ===
   useEffect(() => {
     const fetchRooms = async () => {
@@ -98,7 +130,7 @@ const AdminDashboard = () => {
         price: parseFloat(newRoom.price),
         capacity: parseInt(newRoom.capacity),
       });
-      setRooms([...rooms, added]); // update state tanpa reload
+      setRooms([...rooms, added]);
       setShowAddRoom(false);
       setNewRoom({ name: "", price: "", capacity: "" });
     } catch (err) {
@@ -135,9 +167,16 @@ const AdminDashboard = () => {
     }
   };
 
-  // 🔹 Booking dummy
-  const handleCancelBooking = (id) =>
-    setBookings(bookings.filter((b) => b.id !== id));
+  // 🔹 Cancel booking
+  const handleCancelBooking = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3001/api/bookings/${id}`);
+      setBookings(bookings.filter((b) => b._id !== id));
+      alert("Booking berhasil dibatalkan");
+    } catch (error) {
+      console.error("Failed to cancel booking:", error);
+    }
+  };
 
   // 🔹 Logout
   const handleLogout = () => {
@@ -198,7 +237,14 @@ const AdminDashboard = () => {
             <table className="w-full table-auto text-left">
               <thead>
                 <tr className="bg-gray-100">
-                  {["User", "Room", "Status", "Action"].map((header) => (
+                  {[
+                    "User",
+                    "Room",
+                    "Check-In",
+                    "Check-Out",
+                    "Status",
+                    "Action",
+                  ].map((header) => (
                     <th key={header} className="p-4 text-gray-700">
                       {header}
                     </th>
@@ -206,19 +252,36 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {bookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-gray-50 transition">
-                    <td className="p-4">{b.user}</td>
-                    <td className="p-4">{b.room}</td>
-                    <td className="p-4">{b.status}</td>
-                    <td className="p-4 flex space-x-4">
-                      <TrashIcon
-                        className={iconClass}
-                        onClick={() => handleCancelBooking(b.id)}
-                      />
+                {bookings.length > 0 ? (
+                  bookings.map((b) => (
+                    <tr key={b._id} className="hover:bg-gray-50 transition">
+                      <td className="p-4">{b.user?.name || "Unknown"}</td>
+                      <td className="p-4">{b.room?.name || "Unknown Room"}</td>
+                      <td className="p-4">
+                        {new Date(b.checkIn).toLocaleDateString()}
+                      </td>
+                      <td className="p-4">
+                        {new Date(b.checkOut).toLocaleDateString()}
+                      </td>
+                      <td className="p-4">{b.status || "Pending"}</td>
+                      <td className="p-4 flex space-x-4">
+                        <TrashIcon
+                          className={iconClass}
+                          onClick={() => handleCancelBooking(b._id)}
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="text-center py-4 text-gray-500 italic"
+                    >
+                      Tidak ada data booking.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -363,9 +426,9 @@ const AdminDashboard = () => {
             />
             <div className="flex justify-end space-x-4">
               <button
-                onClick={() => {
-                  showAddRoom ? setShowAddRoom(false) : setShowEditRoom(false);
-                }}
+                onClick={() =>
+                  showAddRoom ? setShowAddRoom(false) : setShowEditRoom(false)
+                }
                 className="px-4 py-2 bg-gray-300 rounded-lg"
               >
                 Cancel
