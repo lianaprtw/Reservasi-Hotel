@@ -17,7 +17,10 @@ const MyBooking = () => {
     const fetchBookings = async () => {
       try {
         const response = await axios.get("http://localhost:3001/api/bookings");
-        const data = response.data.map(b => ({
+        const userId = localStorage.getItem("userId");
+
+        const userBookings = response.data.filter(b => b.userId === userId);
+        const data = userBookings.data.map(b => ({
           ...b,
           image: b.image || roomImage,
           dateRange: `${new Date(b.checkIn).toLocaleDateString()} - ${new Date(b.checkOut).toLocaleDateString()}`,
