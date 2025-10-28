@@ -2,20 +2,28 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import roomImg from "../assets/room.png";
+import roomImg from "../assets/room.png"; // Fallback image
 import { FaCalendarAlt } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 
+// Helper function untuk format tanggal (anti-timezone-bug)
+function formatDateLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 const BookingStep1 = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Ambil data kamar dari RoomDetail
-  const { id, roomName, price } = location.state || {};
+  // Ambil data kamar, termasuk 'image'
+  const { id, roomName, price, image } = location.state || {};
 
-  // ✅ Validasi data yang diterima
+  // Validasi data yang diterima
   useEffect(() => {
     if (!id || !roomName || !price) {
       alert("❌ Data kamar tidak ditemukan. Silakan pilih kamar terlebih dahulu.");
@@ -23,7 +31,7 @@ const BookingStep1 = () => {
     }
   }, [id, roomName, price, navigate]);
 
-  // ✅ State untuk tanggal dan perhitungan total
+  // State untuk tanggal dan perhitungan total
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(
     new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
@@ -31,8 +39,13 @@ const BookingStep1 = () => {
   const [days, setDays] = useState(1);
   const [total, setTotal] = useState(price || 0);
 
-  // ✅ Hitung total otomatis setiap tanggal berubah
+  // Hitung total otomatis setiap tanggal berubah
   useEffect(() => {
+    if (endDate <= startDate) {
+      const newEndDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+      setEndDate(newEndDate);
+      return; 
+    }
     const timeDiff = endDate.getTime() - startDate.getTime();
     const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
     const validDays = calculatedDays > 0 ? calculatedDays : 1;
@@ -41,30 +54,55 @@ const BookingStep1 = () => {
     setTotal(validDays * (price || 0));
   }, [startDate, endDate, price]);
 
-  // ✅ Fungsi handle booking
+  // Logika agar endDate otomatis update jika startDate melewatinya
+  useEffect(() => {
+    if (startDate >= endDate) {
+      const newEndDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+      setEndDate(newEndDate);
+    }
+  }, [startDate]); // Hanya bergantung pada startDate
+
+  // Fungsi handle booking (VERSI AMAN & KONSISTEN)
   const handleBookNow = async () => {
     try {
-      // Siapkan data booking
-      const bookingPayload = {
-        roomId: id, // dari RoomDetail
-        userId: 1, // sementara hardcode
-        roomName,
-        checkIn: startDate.toISOString().split("T")[0],
-        checkOut: endDate.toISOString().split("T")[0],
-        days,
-        total,
-      };
+      // 1. Ambil token dengan Kunci yang sama seperti di MyBooking.js
+      const token = localStorage.getItem("token");
 
-      // Validasi sebelum kirim
-      if (!bookingPayload.roomId || !bookingPayload.userId) {
-        alert("❌ Data kamar atau user tidak ditemukan.");
+      if (!token) {
+        alert("❌ Silakan login terlebih dahulu untuk memesan kamar.");
+        navigate("/login"); 
         return;
       }
 
-      // Kirim ke backend
+      // 2. Siapkan data booking (userId DIHAPUS, image DITAMBAHKAN)
+      const bookingPayload = {
+        roomId: id,
+        roomName,
+        checkIn: formatDateLocal(startDate), // Pakai helper
+        checkOut: formatDateLocal(endDate), // Pakai helper
+        days,
+        total,
+        image: image || roomImg // Kirim gambar ke DB
+      };
+
+      // 3. Validasi (userId dihapus dari sini)
+      if (!bookingPayload.roomId) {
+        alert("❌ Data kamar tidak ditemukan.");
+        return;
+      }
+
+      // 4. Siapkan config header untuk mengirim token
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
+      // 5. Kirim ke backend (dengan payload DAN config)
       const response = await axios.post(
         "http://localhost:3001/api/bookings",
-        bookingPayload
+        bookingPayload, // Argumen 1: Data
+        config          // Argumen 2: Config (termasuk token)
       );
 
       if (!response.data || !response.data._id) {
@@ -74,6 +112,7 @@ const BookingStep1 = () => {
 
       // ✅ Navigate ke step 2 sambil bawa data booking
       navigate("/booking-step2", { state: { ...response.data } });
+
     } catch (error) {
       console.error("❌ Booking failed:", error.response?.data || error.message);
       alert(
@@ -100,8 +139,8 @@ const BookingStep1 = () => {
           {/* Left Side - Room Info */}
           <div className="flex flex-col items-center md:items-start">
             <img
-              src={roomImg}
-              alt={roomName}
+              src={image || roomImg}
+              alt={roomName || "Room"}
               className="rounded-lg w-[320px] h-[200px] object-cover mb-3"
             />
             <h3 className="font-semibold text-[#7C6A46] text-lg">{roomName}</h3>
@@ -134,7 +173,7 @@ const BookingStep1 = () => {
                   selectsEnd
                   startDate={startDate}
                   endDate={endDate}
-                  minDate={startDate}
+                  minDate={new Date(startDate.getTime() + 24 * 60 * 60 * 1000)} // min end date 1 hari setelah start
                   className="bg-gray-100 text-gray-600 w-full outline-none"
                 />
               </div>
@@ -160,7 +199,7 @@ const BookingStep1 = () => {
 
               <button
                 type="button"
-                onClick={() => navigate(`/rooms/${id}`)}
+                onClick={() => navigate(id ? `/rooms/${id}` : '/rooms')}
                 className="border border-gray-300 text-gray-500 py-2 rounded-md font-medium mt-3 hover:bg-gray-200 hover:text-[#7A5232] transition duration-300"
               >
                 Cancel
@@ -176,3 +215,4 @@ const BookingStep1 = () => {
 };
 
 export default BookingStep1;
+
