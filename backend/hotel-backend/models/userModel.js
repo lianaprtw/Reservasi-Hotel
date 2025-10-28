@@ -10,6 +10,9 @@ const userSchema = mongoose.Schema(
     role: { type: String, enum: ["user", "admin"], default: "user" },
     phoneNo: { type: String },
     country: { type: String },
+
+    // 🟢 Tambahkan ini untuk menandai siapa pembuat user
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );
@@ -21,12 +24,11 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Hash password before save
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // ✅ tambahkan return
-  
+  if (!this.isModified("password")) return next();
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next(); // ✅ tambahkan next() di akhir
+  next();
 });
-
 
 module.exports = mongoose.model("User", userSchema);

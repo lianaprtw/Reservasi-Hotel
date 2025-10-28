@@ -8,13 +8,13 @@ const {
   getUserById,
   updateUser,
   deleteUser,
+  createUser
 } = require("../controllers/adminController");
 const User = require("../models/userModel"); // tambahkan ini untuk query langsung ke DB
 
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 
-// ✅ route baru untuk ambil semua admin
 router.get("/admins", protect, admin, async (req, res) => {
   try {
     const admins = await User.find({ role: "admin" }).select("-password");
@@ -25,6 +25,9 @@ router.get("/admins", protect, admin, async (req, res) => {
   }
 });
 
+// 🟢 Admin membuat user baru
+router.post("/users", protect, admin, createUser);
+
 router.get("/users", protect, admin, getUsers);
 router
   .route("/users/:id")
@@ -33,3 +36,4 @@ router
   .delete(protect, admin, deleteUser);
 
 module.exports = router;
+
