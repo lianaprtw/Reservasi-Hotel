@@ -3,18 +3,13 @@ import Room from "../models/Room.js";
 // GET all rooms
 export const getRooms = async (req, res) => {
   try {
-    const { location, type } = req.query;
-    const query = {};
-
-    if (location) query.location = location;
-    if (type) query.type = type;
-
-    const rooms = await Room.find(query);
-    res.json(rooms);
+    const rooms = await Room.find();
+    res.status(200).json(rooms);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // GET by ID
 export const getRoomById = async (req, res) => {
@@ -61,5 +56,33 @@ export const deleteRoom = async (req, res) => {
     res.json({ message: "Room deleted successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+// DECREASE CAPACITY
+
+export const decreaseRoomCapacity = async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    if (room.capacity > 0) {
+      room.capacity -= 1;
+      await room.save();
+
+      console.log(`✅ Capacity updated: ${room.name} → ${room.capacity}`);
+
+      // 🔹 Penting: pastikan selalu ada res.json()
+      return res.status(200).json({
+        message: "Capacity decreased successfully",
+        room,
+      });
+    } else {
+      return res.status(400).json({ message: "Room is fully booked" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
