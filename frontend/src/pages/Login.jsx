@@ -7,7 +7,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // 👁️ State baru untuk toggle
@@ -18,51 +18,21 @@ const Login = () => {
     setLoading(true);
 
     try {
-      let endpoint;
-      let body;
+      const endpoint = "http://localhost:5000/api/users/login";
+      const response = await axios.post(endpoint, { username, password });
 
-      if (isAdmin) {
-        // 🟢 Pakai kredensial admin default
-        endpoint = "http://localhost:5000/api/admin/login";
-        body = {
-          username: "adminjohn",
-          password: "admin1234",
-        };
-      } else {
-        endpoint = "http://localhost:5000/api/users/login";
-        body = { username, password };
-      }
+      const { token, user } = response.data;
+      const role = user?.role || (username === "adminjohn" ? "admin" : "user");
 
-      const response = await axios.post(endpoint, body);
-
-      // 🔹 Ambil data dari backend
-      const { token, role: backendRole, user } = response.data;
-      const role = backendRole || (isAdmin ? "admin" : "user");
-
-      // 🔹 Simpan token & role
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
+      localStorage.setItem("displayName", user?.username || username);
 
-      // 🟢 Tambahan: simpan nama user agar tampil di Navbar & MyAccount
-      const displayName = user?.username || username || "Guest";
-      localStorage.setItem("displayName", displayName);
-
-      // 🟢 Simpan data user lengkap kalau ada (untuk MyAccount)
-      if (user) {
-        localStorage.setItem("userData", JSON.stringify(user));
-      }
-
-      // 🟢 Trigger event untuk update Navbar secara realtime
       window.dispatchEvent(new Event("storage"));
-
       setLoading(false);
 
-      // 🔹 Arahkan ke halaman sesuai role
-      if (role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/home");
-      }
+      if (role === "admin") navigate("/admin");
+      else navigate("/home");
     } catch (err) {
       setLoading(false);
       setError(
