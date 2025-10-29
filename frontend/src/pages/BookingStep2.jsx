@@ -7,9 +7,7 @@ import axios from "axios";
 const BookingStep2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Ambil data dari BookingStep1
-  const booking = location.state || {};
+  const bookingPreview = location.state || {}; // Data dari Step 1
 
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -17,15 +15,13 @@ const BookingStep2 = () => {
   const [cvv, setCvv] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Cek booking saat komponen pertama kali di-render
   useEffect(() => {
-    if (!booking || (!booking.id && !booking._id)) {
+    if (!bookingPreview?.roomId) {
       alert("Booking data not found! Redirecting to Step 1.");
       navigate("/booking");
     }
-  }, [booking, navigate]);
+  }, [bookingPreview, navigate]);
 
-  // Fungsi untuk format tanggal rapi
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -37,39 +33,62 @@ const BookingStep2 = () => {
 
   const handlePayment = async (e) => {
     e.preventDefault();
-
-    // Validasi form
     if (!cardName || !cardNumber || !expiry || !cvv) {
       alert("Please complete all payment fields.");
       return;
     }
 
-    const bookingId = booking.id || booking._id;
-    if (!bookingId) {
-      alert("Booking ID not found!");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Login required!");
+      navigate("/login");
       return;
     }
 
-    const paymentData = {
-      bookingId,
-      paymentMethod: "credit_card",
-      cardDetails: { cardName, cardNumber, expiry, cvv },
-      amount: booking.total, 
-    };
-
     try {
       setIsSubmitting(true);
-      const response = await axios.post(
+
+      // ✅ Step 1: Buat booking dulu di booking service
+      const bookingPayload = {
+        roomId: bookingPreview.roomId,
+        roomName: bookingPreview.roomName,
+        checkIn: bookingPreview.checkIn,
+        checkOut: bookingPreview.checkOut,
+        days: bookingPreview.days,
+        total: bookingPreview.total,
+      };
+
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      const bookingRes = await axios.post(
+        "http://localhost:3001/api/bookings",
+        bookingPayload,
+        config
+      );
+
+      const bookingId = bookingRes.data._id || bookingRes.data.booking?._id;
+      console.log("Booking created:", bookingId);
+
+      // ✅ Step 2: Kirim payment setelah booking dibuat
+      const paymentData = {
+        bookingId,
+        paymentMethod: "credit_card",
+        cardDetails: { cardName, cardNumber, expiry, cvv },
+        amount: bookingPreview.total,
+      };
+
+      const payRes = await axios.post(
         "http://localhost:3002/api/payment/pay",
         paymentData
       );
-      console.log("Payment response:", response.data);
 
-      alert("✅ Payment Successful!");
-      navigate("/booking-success", { state: { ...booking, payment: response.data } });
+      alert("✅ Booking and Payment Successful!");
+      navigate("/booking-success", {
+        state: { ...bookingRes.data.booking, payment: payRes.data },
+      });
     } catch (error) {
-      console.error("Payment failed:", error);
-      alert("❌ Payment failed: " + (error.response?.data?.message || error.message));
+      console.error("Payment or booking failed:", error);
+      alert("❌ Failed: " + (error.response?.data?.message || error.message));
     } finally {
       setIsSubmitting(false);
     }
@@ -86,17 +105,28 @@ const BookingStep2 = () => {
         </p>
 
         <div className="flex flex-col md:flex-row bg-white rounded-xl shadow-lg p-8 w-[90%] md:w-[800px] gap-8">
-          {/* Booking summary */}
+          {/* Booking Summary */}
           <div className="flex flex-col md:w-1/2 border-r pr-5 mb-5 md:mb-0">
             <h3 className="font-semibold text-[#7C6A46] text-lg mb-3">
               Booking Summary
             </h3>
-            <p><span className="font-medium">Room:</span> {booking.roomName}</p>
-            <p><span className="font-medium">Check-In:</span> {formatDate(booking.checkIn)}</p>
-            <p><span className="font-medium">Check-Out:</span> {formatDate(booking.checkOut)}</p>
-            <p><span className="font-medium">Days:</span> {booking.days}</p>
+            <p>
+              <span className="font-medium">Room:</span>{" "}
+              {bookingPreview.roomName}
+            </p>
+            <p>
+              <span className="font-medium">Check-In:</span>{" "}
+              {formatDate(bookingPreview.checkIn)}
+            </p>
+            <p>
+              <span className="font-medium">Check-Out:</span>{" "}
+              {formatDate(bookingPreview.checkOut)}
+            </p>
+            <p>
+              <span className="font-medium">Days:</span> {bookingPreview.days}
+            </p>
             <p className="text-[#7C6A46] font-semibold text-lg mt-3">
-              Total: ${booking.total} USD
+              Total: ${bookingPreview.total} USD
             </p>
           </div>
 
@@ -142,15 +172,21 @@ const BookingStep2 = () => {
                 type="submit"
                 disabled={isSubmitting}
                 className={`py-2 rounded-md font-medium ${
-                  isSubmitting ? "bg-gray-400" : "bg-[#7C6A46] hover:bg-[#7A5232] text-white"
+                  isSubmitting
+                    ? "bg-gray-400"
+                    : "bg-[#7C6A46] hover:bg-[#7A5232] text-white"
                 }`}
               >
-                {isSubmitting ? "Processing..." : `Pay $${booking.total} USD`}
+                {isSubmitting
+                  ? "Processing..."
+                  : `Pay $${bookingPreview.total} USD`}
               </button>
 
               <button
                 type="button"
-                onClick={() => navigate("/booking", { state: { ...booking } })}
+                onClick={() =>
+                  navigate("/booking", { state: { ...bookingPreview } })
+                }
                 className="bg-gray-100 text-gray-400 py-2 rounded-md font-medium hover:bg-gray-200 hover:text-[#7A5232] transition duration-300"
               >
                 Back

@@ -11,8 +11,8 @@ import axios from "axios";
 // Helper function untuk format tanggal (anti-timezone-bug)
 function formatDateLocal(date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -26,7 +26,9 @@ const BookingStep1 = () => {
   // Validasi data yang diterima
   useEffect(() => {
     if (!id || !roomName || !price) {
-      alert("❌ Data kamar tidak ditemukan. Silakan pilih kamar terlebih dahulu.");
+      alert(
+        "❌ Data kamar tidak ditemukan. Silakan pilih kamar terlebih dahulu."
+      );
       navigate("/rooms");
     }
   }, [id, roomName, price, navigate]);
@@ -44,7 +46,7 @@ const BookingStep1 = () => {
     if (endDate <= startDate) {
       const newEndDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
       setEndDate(newEndDate);
-      return; 
+      return;
     }
     const timeDiff = endDate.getTime() - startDate.getTime();
     const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -63,64 +65,27 @@ const BookingStep1 = () => {
   }, [startDate]); // Hanya bergantung pada startDate
 
   // Fungsi handle booking (VERSI AMAN & KONSISTEN)
-  const handleBookNow = async () => {
-    try {
-      // 1. Ambil token dengan Kunci yang sama seperti di MyBooking.js
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        alert("❌ Silakan login terlebih dahulu untuk memesan kamar.");
-        navigate("/login"); 
-        return;
-      }
-
-      // 2. Siapkan data booking (userId DIHAPUS, image DITAMBAHKAN)
-      const bookingPayload = {
-        roomId: id,
-        roomName,
-        checkIn: formatDateLocal(startDate), // Pakai helper
-        checkOut: formatDateLocal(endDate), // Pakai helper
-        days,
-        total,
-        image: image || roomImg // Kirim gambar ke DB
-      };
-
-      // 3. Validasi (userId dihapus dari sini)
-      if (!bookingPayload.roomId) {
-        alert("❌ Data kamar tidak ditemukan.");
-        return;
-      }
-
-      // 4. Siapkan config header untuk mengirim token
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
-
-      // 5. Kirim ke backend (dengan payload DAN config)
-      const response = await axios.post(
-        "http://localhost:3001/api/bookings",
-        bookingPayload, // Argumen 1: Data
-        config          // Argumen 2: Config (termasuk token)
-      );
-
-      if (!response.data || !response.data._id) {
-        alert("Booking gagal, response dari server tidak valid.");
-        return;
-      }
-
-      // ✅ Navigate ke step 2 sambil bawa data booking
-      navigate("/booking-step2", { state: { ...response.data } });
-
-    } catch (error) {
-      console.error("❌ Booking failed:", error.response?.data || error.message);
-      alert(
-        `❌ Booking gagal. ${
-          error.response?.data?.message || "Silakan coba lagi nanti."
-        }`
-      );
+  const handleBookNow = () => {
+    // Pastikan user login dulu
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("❌ Silakan login terlebih dahulu untuk memesan kamar.");
+      navigate("/login");
+      return;
     }
+
+    // Data sementara untuk dikirim ke step 2
+    const bookingPreview = {
+      roomId: id,
+      roomName,
+      checkIn: formatDateLocal(startDate),
+      checkOut: formatDateLocal(endDate),
+      days,
+      total,
+    };
+
+    // Kirim data ke step 2 tanpa buat booking di DB
+    navigate("/booking-step2", { state: { ...bookingPreview } });
   };
 
   return (
@@ -184,7 +149,9 @@ const BookingStep1 = () => {
                   ${total} USD
                 </span>{" "}
                 for{" "}
-                <span className="font-semibold text-[#7C6A46]">{days} Days</span>
+                <span className="font-semibold text-[#7C6A46]">
+                  {days} Days
+                </span>
               </p>
             </div>
 
@@ -199,7 +166,7 @@ const BookingStep1 = () => {
 
               <button
                 type="button"
-                onClick={() => navigate(id ? `/rooms/${id}` : '/rooms')}
+                onClick={() => navigate(id ? `/rooms/${id}` : "/rooms")}
                 className="border border-gray-300 text-gray-500 py-2 rounded-md font-medium mt-3 hover:bg-gray-200 hover:text-[#7A5232] transition duration-300"
               >
                 Cancel
@@ -215,4 +182,3 @@ const BookingStep1 = () => {
 };
 
 export default BookingStep1;
-
