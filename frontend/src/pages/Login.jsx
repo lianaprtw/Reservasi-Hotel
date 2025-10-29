@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // 👁️ Tambahan ikon
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const Login = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👁️ State baru untuk toggle
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -90,6 +92,7 @@ const Login = () => {
           </h2>
 
           <form className="space-y-4" onSubmit={handleLogin}>
+            {/* Username */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Username
@@ -105,30 +108,40 @@ const Login = () => {
               />
             </div>
 
-            <div>
+            {/* Password dengan ikon mata 👁️ */}
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Password
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
+                className="w-full border border-gray-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
                 required={!isAdmin}
                 disabled={isAdmin}
               />
+              {/* 👁️ Ikon toggle */}
+              <div
+                className="absolute right-3 top-9 cursor-pointer text-gray-500 hover:text-[#7C6A46]"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </div>
             </div>
 
-            {/* Checkbox login as admin */}
-            {/* <div className="flex items-center space-x-2">
+            {/* Checkbox login as admin (masih disembunyikan) */}
+            {/* 
+            <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 checked={isAdmin}
                 onChange={(e) => setIsAdmin(e.target.checked)}
               />
               <label className="text-gray-600 text-sm">Login as Admin</label>
-            </div> */}
+            </div> 
+            */}
 
             {error && (
               <p className="text-red-500 text-sm text-center">{error}</p>

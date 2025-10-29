@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios"; // 🟢 Import axios untuk koneksi ke backend
+import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // 👁️ Tambahan ikon mata
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👁️ State tambahan
 
   // 🧠 Fungsi ketika user menekan tombol Register
   const handleRegister = async (e) => {
@@ -21,7 +23,6 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // 🔗 Kirim data ke backend
       const response = await axios.post(
         "http://localhost:5000/api/users/register",
         {
@@ -35,16 +36,14 @@ const Register = () => {
 
       if (response.status === 201) {
         alert("Registration successful! Please login.");
-        navigate("/login"); // 🔀 Arahkan ke halaman login
+        navigate("/login");
       }
     } catch (err) {
-      // ❌ Jika error dari backend
       if (err.response) {
         setError(
           err.response.data.message || "Registration failed. Try again."
         );
       } else {
-        // ⚠️ Jika server tidak bisa dihubungi
         setError("Cannot connect to server. Please check backend.");
       }
     } finally {
@@ -126,18 +125,25 @@ const Register = () => {
               />
             </div>
 
-            <div>
+            {/* 🔒 Input Password dengan ikon mata */}
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Password
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 6 characters"
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
+                className="w-full border border-gray-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#7C6A46]"
                 required
               />
+              <div
+                className="absolute right-3 top-9 cursor-pointer text-gray-500 hover:text-[#7C6A46]"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </div>
             </div>
 
             {/* Pesan error kalau gagal */}
