@@ -6,35 +6,38 @@ const router = express.Router();
 const {
   createBooking,
   getMyBookings,
+  getBookingById,        // ✅ baru ditambahkan
   cancelBooking,
-  getAllBookings
-} = require('../controllers/bookingController'); // Sesuaikan path
+  getAllBookings,
+  getBookingByIdAdmin    // ✅ baru ditambahkan
+} = require('../controllers/bookingController');
 
 // Impor middleware keamanan
-const { protect, adminCheck } = require('../middleware/authMiddleware'); // 🔹 pastikan adminCheck sesuai
+const { protect, adminCheck } = require('../middleware/authMiddleware');
 
 // 🔹 POST /api/bookings
-// (Buat booking baru) - Dilindungi, user harus login
+// Buat booking baru (user harus login)
 router.post('/', protect, createBooking);
 
 // 🔹 GET /api/bookings/mybookings
-// (Get booking *saya*) - Dilindungi, ini yang dipakai frontend Anda
+// Get booking milik user
 router.get('/mybookings', protect, getMyBookings);
 
+// 🔹 GET /api/bookings/:id
+// Get detail booking milik user
+router.get('/:id', protect, getBookingById);
+
 // 🔹 DELETE /api/bookings/:id
-// (Cancel booking *saya*) - Dilindungi
+// Cancel booking milik user
 router.delete('/:id', protect, cancelBooking);
 
-
-// --- Rute Admin (Tambahan, kode lama tetap utuh) ---
-// 🔹 GET /api/bookings
-// (Get SEMUA booking) - Dilindungi (Harusnya admin)
-// router.get('/', authMiddleware, adminCheck, getAllBookings);
-
-// ✅ RUTE BARU UNTUK ADMIN DASHBOARD
-// Aktif dan aman: menampilkan semua booking untuk dashboard admin
+// --- Rute Admin ---
+// 🔹 GET /api/bookings/admin/all
+// Get semua booking untuk admin dashboard
 router.get('/admin/all', protect, adminCheck, getAllBookings);
 
+// 🔹 GET /api/bookings/admin/:id
+// Get detail booking tertentu untuk admin
+router.get('/admin/:id', protect, adminCheck, getBookingByIdAdmin);
 
-// --- Akhir ---
 module.exports = router;
