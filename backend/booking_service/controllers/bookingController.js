@@ -64,7 +64,12 @@ const cancelBooking = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    await booking.remove();
+    // ===== Versi lama (bisa menimbulkan error di Mongoose terbaru) =====
+    // await booking.remove();
+
+    // ===== Versi baru yang aman =====
+    await booking.deleteOne();
+
     res.json({ message: 'Booking cancelled successfully' });
   } catch (err) {
     console.error('Error cancelling booking:', err.message);
