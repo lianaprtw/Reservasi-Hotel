@@ -9,6 +9,7 @@ import {
 } from "../api/roomService";
 import axios from "axios";
 
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
@@ -81,7 +82,18 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/rooms");
+        const res = await fetch(
+          `http://localhost:5001/api/rooms?t=${Date.now()}`,
+          {
+            cache: "no-store", // 🚫 jangan cache response
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+          }
+        );
+
         if (!res.ok) throw new Error("Gagal fetch rooms");
         const data = await res.json();
         setRooms(data);
@@ -92,8 +104,10 @@ const AdminDashboard = () => {
         setLoadingRooms(false);
       }
     };
+
     fetchRooms();
   }, []);
+
 
   // 🔹 CRUD Rooms
   const handleAddRoom = async () => {
@@ -139,6 +153,30 @@ const AdminDashboard = () => {
       console.error(err);
     }
   };
+
+  const handleDecreaseCapacity = async (roomId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5001/api/rooms/${roomId}/decrease`,
+        {
+          method: "PUT",
+        }
+      );
+      const data = await res.json();
+
+      console.log(data);
+
+      // 🔹 Update state rooms langsung
+      setRooms((prevRooms) =>
+        prevRooms.map((r) =>
+          r._id === roomId ? { ...r, capacity: data.room.capacity } : r
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   // 🔹 Delete user
   const handleDeleteUser = async (id) => {
