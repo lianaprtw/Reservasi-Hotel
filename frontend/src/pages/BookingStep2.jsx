@@ -25,6 +25,16 @@ const BookingStep2 = () => {
     }
   }, [booking, navigate]);
 
+  // Fungsi untuk format tanggal rapi
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   const handlePayment = async (e) => {
     e.preventDefault();
 
@@ -82,8 +92,8 @@ const BookingStep2 = () => {
               Booking Summary
             </h3>
             <p><span className="font-medium">Room:</span> {booking.roomName}</p>
-            <p><span className="font-medium">Check-In:</span> {booking.checkIn}</p>
-            <p><span className="font-medium">Check-Out:</span> {booking.checkOut}</p>
+            <p><span className="font-medium">Check-In:</span> {formatDate(booking.checkIn)}</p>
+            <p><span className="font-medium">Check-Out:</span> {formatDate(booking.checkOut)}</p>
             <p><span className="font-medium">Days:</span> {booking.days}</p>
             <p className="text-[#7C6A46] font-semibold text-lg mt-3">
               Total: ${booking.total} USD
