@@ -17,7 +17,16 @@ const BookingDetail = () => {
   useEffect(() => {
     const fetchBooking = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/bookings/${id}`);
+        // Ambil token dari localStorage
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("User not logged in");
+
+        const response = await axios.get(`http://localhost:3001/api/bookings/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         const data = response.data;
 
         // Format data agar lebih mudah digunakan
@@ -26,16 +35,16 @@ const BookingDetail = () => {
           image: data.image || roomImage,
           checkIn: new Date(data.checkIn).toLocaleDateString(),
           checkOut: new Date(data.checkOut).toLocaleDateString(),
-          price: data.total ? `Rp ${data.total.toLocaleString()}` : "Rp 0",
+          price: data.total ? `$ ${data.total.toLocaleString()}` : "$ 0",
           location: data.location || "Lokasi tidak tersedia",
           guests: data.guests || 2,
-          roomType: data.roomType || "Standard Room",
+          // roomType: data.roomType || "Standard Room",
         };
 
         setBooking(formatted);
       } catch (error) {
         console.error("❌ Failed to fetch booking:", error);
-        alert("Gagal memuat detail booking.");
+        alert("Gagal memuat detail booking. Pastikan Anda sudah login.");
       } finally {
         setLoading(false);
       }
@@ -87,9 +96,9 @@ const BookingDetail = () => {
           {/* Detail booking */}
           <div className="w-1/2 space-y-4">
             <h3 className="text-2xl font-semibold text-gray-800">{booking.roomName}</h3>
-            <p className="text-gray-500 flex items-center">
+            {/* <p className="text-gray-500 flex items-center">
               <FaMapMarkerAlt className="mr-2 text-amber-600" /> {booking.location}
-            </p>
+            </p> */}
 
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
@@ -104,18 +113,18 @@ const BookingDetail = () => {
                   <FaCalendarAlt className="mr-2 text-amber-600" /> {booking.checkOut}
                 </p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-gray-500 text-sm">Guests</p>
                 <p className="font-medium text-gray-800 flex items-center">
                   <FaUser className="mr-2 text-amber-600" /> {booking.guests} persons
                 </p>
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <p className="text-gray-500 text-sm">Room Type</p>
                 <p className="font-medium text-gray-800 flex items-center">
                   <FaDoorOpen className="mr-2 text-amber-600" /> {booking.roomType}
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <div className="mt-6 border-t border-gray-200 pt-4">
