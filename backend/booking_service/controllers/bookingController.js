@@ -1,6 +1,8 @@
 // controllers/bookingController.js
-const Booking = require('../models/booking.model');
+const Booking = require("../models/booking.model");
+const axios = require("axios");
 
+const CATALOG_SERVICE_URL = "http://localhost:5001/api/rooms";
 // ===============================================
 // 🔹 USER ROUTES
 // ===============================================
@@ -10,10 +12,11 @@ const Booking = require('../models/booking.model');
 // @access  Private (user)
 const createBooking = async (req, res) => {
   try {
-    const { roomId, roomName, checkIn, checkOut, days, total, image } = req.body;
+    const { roomId, roomName, checkIn, checkOut, days, total, image } =
+      req.body;
 
     if (!roomId || !roomName || !checkIn || !checkOut || !total) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     const userId = req.user.id;
@@ -26,13 +29,21 @@ const createBooking = async (req, res) => {
       checkOut,
       days,
       total,
-      image,
     });
 
     const newBooking = await booking.save();
-    res.status(201).json(newBooking);
+
+    const response = await axios.put(
+      `${CATALOG_SERVICE_URL}/${roomId}/decrease`
+    );
+    const updatedRoom = response.data.room;
+    res.status(201).json({
+      message: "Booking created successfully, room capacity decreased",
+      booking: newBooking,
+      updatedRoom,
+    });
   } catch (err) {
-    console.error('Error creating booking:', err.message);
+    console.error("Error creating booking:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
@@ -42,10 +53,12 @@ const createBooking = async (req, res) => {
 // @access  Private (user)
 const getMyBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const bookings = await Booking.find({ userId: req.user.id }).sort({
+      createdAt: -1,
+    });
     res.status(200).json(bookings);
   } catch (err) {
-    console.error('Error fetching user bookings:', err.message);
+    console.error("Error fetching user bookings:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
@@ -57,11 +70,11 @@ const cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
 
     // Pastikan booking milik user yang login
     if (booking.userId.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'Not authorized' });
+      return res.status(401).json({ message: "Not authorized" });
     }
 
     // ===== Versi lama (bisa menimbulkan error di Mongoose terbaru) =====
@@ -70,9 +83,9 @@ const cancelBooking = async (req, res) => {
     // ===== Versi baru yang aman =====
     await booking.deleteOne();
 
-    res.json({ message: 'Booking cancelled successfully' });
+    res.json({ message: "Booking cancelled successfully" });
   } catch (err) {
-    console.error('Error cancelling booking:', err.message);
+    console.error("Error cancelling booking:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
@@ -87,17 +100,17 @@ const cancelBooking = async (req, res) => {
 const getAllBookings = async (req, res) => {
   try {
     // Cek admin (opsional jika sudah dicek di middleware)
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access only' });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access only" });
     }
 
     const bookings = await Booking.find()
-      .populate('userId', 'name email') // populate user info
+      .populate("userId", "name email") // populate user info
       .sort({ createdAt: -1 });
 
     res.status(200).json(bookings);
   } catch (err) {
-    console.error('Error fetching all bookings:', err.message);
+    console.error("Error fetching all bookings:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
