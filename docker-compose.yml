@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  hotel_backend:
+    build: ./backend/hotel-backend
+    container_name: hotel_backend
+    ports:
+      - "${HOTEL_PORT}:${HOTEL_PORT}"
+    environment:
+      - PORT=${HOTEL_PORT}
+      - MONGO_URI=${HOTEL_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - app-network
+
+  booking_service:
+    build: ./backend/booking_service
+    container_name: booking_service
+    ports:
+      - "${BOOKING_PORT}:${BOOKING_PORT}"
+    environment:
+      - PORT=${BOOKING_PORT}
+      - MONGO_URI=${BOOKING_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - app-network
+
+  catalog_service:
+    build: ./backend/catalog_service
+    container_name: catalog_service
+    ports:
+      - "${CATALOG_PORT}:${CATALOG_PORT}"
+    environment:
+      - PORT=${CATALOG_PORT}
+      - MONGO_URI=${CATALOG_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - app-network
+
+  payment_service:
+    build: ./backend/payment_service
+    container_name: payment_service
+    ports:
+      - "${PAYMENT_PORT}:${PAYMENT_PORT}"
+    environment:
+      - PORT=${PAYMENT_PORT}
+      - MONGO_URI=${PAYMENT_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    depends_on:
+      - hotel_backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

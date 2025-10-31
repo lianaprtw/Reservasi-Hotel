@@ -1,5 +1,5 @@
 # Gunakan image Node.js resmi versi ringan
-FROM node:18-alpine
+FROM node:20-alpine AS build
 
 # Tentukan direktori kerja di dalam container
 WORKDIR /usr/src/app
