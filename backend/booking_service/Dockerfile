@@ -21,4 +21,5 @@ EXPOSE 3001
 
 # Jalankan aplikasi
 # GANTI "npm" MENJADI "node"
-CMD ["node", "booking.js"]
+CMD ["npm", "start"]
+

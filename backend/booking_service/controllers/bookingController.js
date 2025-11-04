@@ -2,7 +2,7 @@
 const Booking = require("../models/booking.model");
 const axios = require("axios");
 
-const CATALOG_SERVICE_URL = "http://localhost:5001/api/rooms";
+const CATALOG_SERVICE_URL = "http://catalog_service:5001/api/rooms";
 
 // ===============================================
 // 🔹 USER ROUTES
