@@ -1,6 +1,22 @@
 version: '3.9'
 
 services:
+  # --- SERVICE DATABASE BARU ---
+  # Kita tambahkan service MongoDB di sini
+  mongo_db:
+    image: mongo:latest
+    container_name: mongo_db_container
+    ports:
+      # Port ini diekspos ke localhost agar Anda bisa cek
+      # menggunakan MongoDB Compass di alamat: mongodb://localhost:27017
+      - "27017:27017"
+    volumes:
+      # Ini akan menyimpan data Anda di volume bernama 'mongo-data'
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  # --- SERVICE ANDA YANG SUDAH ADA ---
   hotel_backend:
     build: ./backend/hotel-backend
     container_name: hotel_backend
@@ -12,6 +28,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - app-network
+    depends_on: # <-- TAMBAHAN: Menunggu database siap
+      - mongo_db
 
   booking_service:
     build: ./backend/booking_service
@@ -24,6 +42,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - app-network
+    depends_on: # <-- TAMBAHAN: Menunggu database siap
+      - mongo_db
 
   catalog_service:
     build: ./backend/catalog_service
@@ -36,6 +56,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - app-network
+    depends_on: # <-- TAMBAHAN: Menunggu database siap
+      - mongo_db
 
   payment_service:
     build: ./backend/payment_service
@@ -48,6 +70,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - app-network
+    depends_on: # <-- TAMBAHAN: Menunggu database siap
+      - mongo_db
 
   frontend:
     build: ./frontend
@@ -64,3 +88,8 @@ services:
 networks:
   app-network:
     driver: bridge
+
+# --- VOLUME BARU ---
+# Mendefinisikan volume yang kita sebut di atas
+volumes:
+  mongo-data:
