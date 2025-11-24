@@ -50,6 +50,7 @@ Aplikasi mendukung proses bisnis pemesanan kamar hotel, seperti:
 
 
 4. Service yang akan berjalan:
+
 | Service  | Port  | Keterangan        |
 |----------|-------|-------------------|
 | frontend | 5173  | React Vite Client |
