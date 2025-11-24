@@ -50,11 +50,11 @@ Aplikasi mendukung proses bisnis pemesanan kamar hotel, seperti:
 
 
 4. Service yang akan berjalan:
-
-Service	        Port	      Keterangan
-frontend	    5173	        React Vite App
-backend	        5001	          API Server
-mongo_db        27017	        Database MongoDB
+| Service  | Port  | Keterangan        |
+|----------|-------|-------------------|
+| frontend | 5173  | React Vite Client |
+| backend  | 5001  | REST API Server   |
+| mongo_db | 27017 | MongoDB Database  |
 
 Aplikasi utama dapat dibuka di:
 
@@ -62,24 +62,29 @@ Aplikasi utama dapat dibuka di:
 
 
 ## 📡 Dokumentasi API Sederhana
-### 🔐 AUTH
-Method	Endpoint	Deskripsi
-POST	/api/auth/register	Registrasi user baru
-POST	/api/auth/login	Login & menghasilkan token JWT
-### 🏨 Rooms
-Method	Endpoint	Deskripsi
-GET	/api/rooms	Ambil semua kamar
-GET	/api/rooms/:id	Detail kamar berdasarkan ID
-POST	/api/rooms	Tambah kamar baru (Admin)
-PUT	/api/rooms/:id	Edit data kamar (Admin)
-DELETE	/api/rooms/:id	Hapus kamar (Admin)
-### 🧾 Booking
-Method	Endpoint	Deskripsi
-POST	/api/booking	Membuat booking
-GET	/api/booking/me	Ambil booking milik user yang sedang login
-GET	/api/booking/:id	Detail booking tertentu
-GET	/api/booking	Semua booking (Admin)
 
+### 🔐 AUTH
+| Method | Endpoint           | Deskripsi                      |
+|--------|---------------------|--------------------------------|
+| POST   | /api/auth/register | Registrasi user baru           |
+| POST   | /api/auth/login    | Login & menghasilkan token JWT |
+
+### 🏨 Rooms
+| Method | Endpoint       | Deskripsi                   |
+| ------ | -------------- | --------------------------- |
+| GET    | /api/rooms     | Ambil semua kamar           |
+| GET    | /api/rooms/:id | Detail kamar berdasarkan ID |
+| POST   | /api/rooms     | Tambah kamar baru (Admin)   |
+| PUT    | /api/rooms/:id | Edit data kamar (Admin)     |
+| DELETE | /api/rooms/:id | Hapus kamar (Admin)         |
+
+### 🧾 Booking
+| Method | Endpoint         | Deskripsi                                  |
+| ------ | ---------------- | ------------------------------------------ |
+| POST   | /api/booking     | Membuat booking                            |
+| GET    | /api/booking/me  | Ambil booking milik user yang sedang login |
+| GET    | /api/booking/:id | Detail booking tertentu                    |
+| GET    | /api/booking     | Semua booking (Admin)                      |
 
 ## 🏁 Status Proyek
 
