@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: payment
+        image: ennolerebulan/payment-service:1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3002
+        env:
+        - name: PORT
+          value: "3002"
+        # PERHATIKAN: Payment Service pakai MONGO_URL (bukan URI)
+        - name: MONGO_URL
+          value: "mongodb://admin:password123@mongodb-service:27017/hotelDB?authSource=admin"
