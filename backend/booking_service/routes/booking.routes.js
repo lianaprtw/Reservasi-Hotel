@@ -1,43 +1,32 @@
-// routes/bookingRoutes.js
 const express = require('express');
 const router = express.Router();
 
-// Impor controller
+/* ================= TEST ROUTE (PALING ATAS) ================= */
+router.get('/test', (req, res) => {
+  res.json({ status: 'BOOKING SERVICE OK' });
+});
+
+/* ================= ADMIN ROUTES ================= */
 const {
   createBooking,
   getMyBookings,
-  getBookingById,        // ✅ baru ditambahkan
+  getBookingById,
   cancelBooking,
   getAllBookings,
-  getBookingByIdAdmin    // ✅ baru ditambahkan
+  getBookingByIdAdmin
 } = require('../controllers/bookingController');
 
-// Impor middleware keamanan
 const { protect, adminCheck } = require('../middleware/authMiddleware');
 
-// 🔹 POST /api/bookings
-// Buat booking baru (user harus login)
-router.post('/', protect, createBooking);
+router.get('/admin/all', protect, adminCheck, getAllBookings);
+router.get('/admin/:id', protect, adminCheck, getBookingByIdAdmin);
 
-// 🔹 GET /api/bookings/mybookings
-// Get booking milik user
+/* ================= USER ROUTES ================= */
+router.post('/', protect, createBooking);
 router.get('/mybookings', protect, getMyBookings);
 
-// 🔹 GET /api/bookings/:id
-// Get detail booking milik user
+/* ⚠️ ROUTE DINAMIS HARUS PALING BAWAH */
 router.get('/:id', protect, getBookingById);
-
-// 🔹 DELETE /api/bookings/:id
-// Cancel booking milik user
 router.delete('/:id', protect, cancelBooking);
-
-// --- Rute Admin ---
-// 🔹 GET /api/bookings/admin/all
-// Get semua booking untuk admin dashboard
-router.get('/admin/all', protect, adminCheck, getAllBookings);
-
-// 🔹 GET /api/bookings/admin/:id
-// Get detail booking tertentu untuk admin
-router.get('/admin/:id', protect, adminCheck, getBookingByIdAdmin);
 
 module.exports = router;

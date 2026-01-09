@@ -2,7 +2,9 @@
 const Booking = require("../models/booking.model");
 const axios = require("axios");
 
-const CATALOG_SERVICE_URL = "http://catalog_service:5001/api/rooms";
+// Ganti underscore (_) jadi strip (-)
+// Dan ganti port 5001 jadi port 80 (karena kita nembak Service K8s)
+const CATALOG_SERVICE_URL = process.env.CATALOG_SERVICE_URL || "http://catalog-service:80/api/rooms";
 
 // ===============================================
 // 🔹 USER ROUTES

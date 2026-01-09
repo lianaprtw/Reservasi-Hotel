@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 // Impor Rute Anda
-const bookingRoutes = require('./routes/booking.routes');
+const bookingRoutes = require('./routes/booking.routes.js');
 // TAMBAHKAN: Rute untuk login/register
 // const userRoutes = require('./routes/user.routes'); 
 

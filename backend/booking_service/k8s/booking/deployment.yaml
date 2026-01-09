@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking
+  template:
+    metadata:
+      labels:
+        app: booking
+    spec:
+      containers:
+        - name: booking
+          image: ennolerebulan/booking-service:1.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          
+          # 👇 TAMBAHKAN BAGIAN INI (PENTING!)
+          env:
+            - name: JWT_SECRET
+              value: "supersecretkey"  # Harus sama persis dengan User Service
+            - name: MONGO_URI
+              value: "mongodb://admin:password123@mongodb-service:27017/hotelDB?authSource=admin"
+
+          envFrom:
+            - configMapRef:
+                name: booking-config
